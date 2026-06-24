@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Bela Tracker</title>
+    <link rel="stylesheet" th:href="@{/style.css}"/>
+</head>
+<body>
+
+<div class="hero">
+    <h1>Bela Tracker</h1>
+    <p>Pratite partije, statistike i turnire vaše bela ekipe</p>
+</div>
+
+<div class="cards">
+    <a href="/matches/new" class="card">
+        <div class="icon">🎴</div>
+        <h3>Nova partija</h3>
+        <p>Upiši rezultat nove partije bele</p>
+    </a>
+
+    <a href="/players/new" class="card">
+        <div class="icon">👤</div>
+        <h3>Dodaj igrača</h3>
+        <p>Dodaj novog igrača u sustav</p>
+    </a>
+
+    <a href="/tournaments" class="card">
+        <div class="icon">🏆</div>
+        <h3>Igraj turnir</h3>
+        <p>Organiziraj i vodi turnir</p>
+    </a>
+
+    <a href="/statistics" class="card">
+        <div class="icon">📊</div>
+        <h3>Statistika</h3>
+        <p>Pregled pobjeda, poraza i rang liste</p>
+    </a>
+</div>
+
+<footer>BelaTracker aplikacija by Dinko Nađ</footer>
+
+</body>
+</html>

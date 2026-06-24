@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Partije</title>
+    <link rel="stylesheet" th:href="@{/style.css}"/>
+</head>
+<body>
+
+<nav>
+    <span class="logo">Bela Tracker</span>
+    <div>
+        <a href="/players">Igrači</a>
+        <a href="/matches/new">Nova partija</a>
+        <a href="/tournaments">Turniri</a>
+        <a href="/statistics">Statistika</a>
+    </div>
+</nav>
+
+<div class="container">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+        <h2>Partije</h2>
+        <a href="/matches/new" class="btn">+ Nova partija</a>
+    </div>
+
+    <table>
+        <tr>
+            <th>Datum</th>
+            <th>Tim 1</th>
+            <th>Rezultat</th>
+            <th>Tim 2</th>
+            <th>Pobjednik</th>
+            <th>Akcije</th>
+        </tr>
+        <tr th:each="m : ${matches}">
+            <td th:text="${m.date}"></td>
+            <td th:text="${m.team1Player1.name} + ' & ' + ${m.team1Player2.name}"></td>
+            <td th:text="${m.team1Score} + ' : ' + ${m.team2Score}"></td>
+            <td th:text="${m.team2Player1.name} + ' & ' + ${m.team2Player2.name}"></td>
+            <td>
+                <span th:if="${m.winner == 1}" style="color:#4caf50; font-weight:bold;"
+                      th:text="${m.team1Player1.name} + ' & ' + ${m.team1Player2.name}">
+                </span>
+                <span th:if="${m.winner == 2}" style="color:#4caf50; font-weight:bold;"
+                      th:text="${m.team2Player1.name} + ' & ' + ${m.team2Player2.name}">
+                </span>
+            </td>
+            <td>
+                <a th:href="@{/matches/delete/{id}(id=${m.id})}"
+                   style="color:#f44336;"
+                   onclick="return confirm('Obrisati partiju?')">Obriši</a>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<footer>Bela Tracker &copy; 2026</footer>
+</body>
+</html>
