@@ -1,6 +1,6 @@
 package belatracker.controller;
 
-import belatracker.model.player;
+import belatracker.model.Player;
 import belatracker.service.PlayerService;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
@@ -31,12 +31,12 @@ public class PlayerController {
 
     @GetMapping("/new")
     public String newForm(Model model) {
-        model.addAttribute("player", new player());
+        model.addAttribute("player", new Player());
         return "players/form";
     }
 
     @PostMapping("/save")
-    public String save(@Valid @ModelAttribute player player, BindingResult result) {
+    public String save(@Valid @ModelAttribute Player player, BindingResult result) {
         if (result.hasErrors()) return "players/form";
         playerService.savePlayer(player);
         return "redirect:/players";

@@ -24,6 +24,7 @@ nav .logo {
     font-size: 24px;
     font-weight: bold;
     color: #4caf50;
+    text-decoration: none;
 }
 
 nav a {
@@ -124,10 +125,35 @@ nav a:hover {
     color: #ffffff;
 }
 
+.btn-danger {
+    background-color: transparent;
+    border: 1px solid #f44336;
+    color: #f44336;
+}
+
+.btn-danger:hover {
+    background-color: #f44336;
+    color: #ffffff;
+}
+
+.btn-sm {
+    padding: 6px 14px;
+    font-size: 13px;
+}
+
 .container {
     max-width: 1000px;
     margin: 40px auto;
     padding: 0 20px;
+}
+
+.page-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 
 h2 {
@@ -160,6 +186,26 @@ tr:hover td {
     background-color: #162916;
 }
 
+td a {
+    color: #4caf50;
+    text-decoration: none;
+    margin-right: 10px;
+}
+
+td a:hover {
+    text-decoration: underline;
+}
+
+.badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+}
+
+.badge-live { background:#2d5a2d; color:#cfe8cf; }
+.badge-done { background:#1e3a1e; color:#8fbf8f; }
+
 input[type="text"], input[type="number"], input[type="date"], select {
     background-color: #0f1f0f;
     border: 1px solid #2d5a2d;
@@ -186,6 +232,22 @@ label {
 .form-group {
     margin-bottom: 18px;
 }
+
+.form-card {
+    background-color: #0f1f0f;
+    border: 1px solid #2d5a2d;
+    border-radius: 12px;
+    padding: 30px;
+    max-width: 480px;
+}
+
+.search-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.search-bar input { margin-bottom: 0; }
 
 .error {
     color: #f44336;

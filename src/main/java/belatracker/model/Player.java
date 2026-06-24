@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 
 @Entity
 @Table(name = "players")
-public class player {
+public class Player {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

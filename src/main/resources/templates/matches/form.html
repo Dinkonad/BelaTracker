@@ -1,59 +1,80 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="hr" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Partije</title>
-    <link rel="stylesheet" th:href="@{/style.css}"/>
+    <title>Nova partija</title>
+    <style>
+        body { font-family: 'Roboto', sans-serif; background:#F1EFEC; padding:24px; margin:0; }
+        .card { max-width:640px; margin:0 auto; background:#fff; border-radius:12px;
+                padding:24px; box-shadow:0 2px 12px rgba(0,0,0,.08); }
+        h1 { color:#123458; font-size:22px; margin:0 0 6px; }
+        .sub { color:#7a7a7a; font-size:14px; margin:0 0 20px; }
+
+        .team-row { display:flex; align-items:center; gap:12px; padding:14px;
+                    border-radius:10px; margin-bottom:12px; }
+        .team-row.mi { background:#123458; }
+        .team-row.vi { background:#5D8AA8; }
+        .team-label { color:#fff; font-weight:700; width:48px; font-size:18px; }
+        select, .txt { flex:1; padding:10px; border:none; border-radius:8px;
+                 background:#F1EFEC; color:#123458; font-size:15px; }
+
+        .extra { margin-top:14px; }
+        .extra label { display:block; color:#123458; font-size:13px; margin-bottom:4px; }
+        .extra input, .extra select { width:100%; padding:10px; border:1px solid #D4C9BE;
+                 border-radius:8px; background:#fff; color:#123458; font-size:15px; box-sizing:border-box; }
+
+        .save-btn { width:100%; padding:14px; border:none; border-radius:8px;
+                    font-size:16px; cursor:pointer; margin-top:16px; background:#123458; color:#fff; }
+        .back { display:inline-block; margin-top:12px; color:#5D8AA8; text-decoration:none; font-size:14px; }
+    </style>
 </head>
 <body>
+<div class="card">
+    <h1>Nova partija</h1>
+    <p class="sub">Odaberi parove. Rezultat (dijeljenja) upisuješ na bloku nakon kreiranja.</p>
 
-<nav>
-    <span class="logo">Bela Tracker</span>
-    <div>
-        <a href="/players">Igrači</a>
-        <a href="/matches/new">Nova partija</a>
-        <a href="/tournaments">Turniri</a>
-        <a href="/statistics">Statistika</a>
-    </div>
-</nav>
+    <form th:action="@{/matches/save}" method="post">
 
-<div class="container">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-        <h2>Partije</h2>
-        <a href="/matches/new" class="btn">+ Nova partija</a>
-    </div>
+        <!-- RED 1: MI -->
+        <div class="team-row mi">
+            <span class="team-label">MI</span>
+            <select name="team1Player1Id" required>
+                <option value="" disabled selected>Igrač 1</option>
+                <option th:each="p : ${players}" th:value="${p.id}" th:text="${p.name}"></option>
+            </select>
+            <select name="team1Player2Id" required>
+                <option value="" disabled selected>Igrač 2</option>
+                <option th:each="p : ${players}" th:value="${p.id}" th:text="${p.name}"></option>
+            </select>
+        </div>
 
-    <table>
-        <tr>
-            <th>Datum</th>
-            <th>Tim 1</th>
-            <th>Rezultat</th>
-            <th>Tim 2</th>
-            <th>Pobjednik</th>
-            <th>Akcije</th>
-        </tr>
-        <tr th:each="m : ${matches}">
-            <td th:text="${m.date}"></td>
-            <td th:text="${m.team1Player1.name} + ' & ' + ${m.team1Player2.name}"></td>
-            <td th:text="${m.team1Score} + ' : ' + ${m.team2Score}"></td>
-            <td th:text="${m.team2Player1.name} + ' & ' + ${m.team2Player2.name}"></td>
-            <td>
-                <span th:if="${m.winner == 1}" style="color:#4caf50; font-weight:bold;"
-                      th:text="${m.team1Player1.name} + ' & ' + ${m.team1Player2.name}">
-                </span>
-                <span th:if="${m.winner == 2}" style="color:#4caf50; font-weight:bold;"
-                      th:text="${m.team2Player1.name} + ' & ' + ${m.team2Player2.name}">
-                </span>
-            </td>
-            <td>
-                <a th:href="@{/matches/delete/{id}(id=${m.id})}"
-                   style="color:#f44336;"
-                   onclick="return confirm('Obrisati partiju?')">Obriši</a>
-            </td>
-        </tr>
-    </table>
+        <!-- RED 2: VI -->
+        <div class="team-row vi">
+            <span class="team-label">VI</span>
+            <select name="team2Player1Id" required>
+                <option value="" disabled selected>Igrač 1</option>
+                <option th:each="p : ${players}" th:value="${p.id}" th:text="${p.name}"></option>
+            </select>
+            <select name="team2Player2Id" required>
+                <option value="" disabled selected>Igrač 2</option>
+                <option th:each="p : ${players}" th:value="${p.id}" th:text="${p.name}"></option>
+            </select>
+        </div>
+
+        <div class="extra">
+            <label>Tko prvi dijeli (neobavezno)</label>
+            <input class="txt" type="text" name="dealer" placeholder="npr. Ime igrača"/>
+        </div>
+
+        <div class="extra">
+            <label>Igra se do</label>
+            <input type="number" name="targetScore" value="1001" min="101"/>
+        </div>
+
+        <button type="submit" class="save-btn">Kreiraj partiju</button>
+    </form>
+
+    <a class="back" href="/matches">← Natrag na partije</a>
 </div>
-
-<footer>Bela Tracker &copy; 2026</footer>
 </body>
 </html>

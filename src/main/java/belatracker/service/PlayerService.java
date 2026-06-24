@@ -1,6 +1,6 @@
 package belatracker.service;
 
-import belatracker.model.player;
+import belatracker.model.Player;
 import belatracker.repository.PlayerRepository;
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -14,15 +14,20 @@ public class PlayerService {
         this.playerRepository = playerRepository;
     }
 
-    public List<player> getAllPlayers() {
+    public List<Player> getAllPlayers() {
         return playerRepository.findAll();
     }
 
-    public player getPlayerById(Long id) {
-        return playerRepository.findById(id).orElseThrow();
+    public List<Player> getLeaderboard() {
+        return playerRepository.findAllByOrderByWinsDescLossesAsc();
     }
 
-    public void savePlayer(player player) {
+    public Player getPlayerById(Long id) {
+        return playerRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Igrač nije pronađen, id: " + id));
+    }
+
+    public void savePlayer(Player player) {
         playerRepository.save(player);
     }
 
@@ -30,7 +35,7 @@ public class PlayerService {
         playerRepository.deleteById(id);
     }
 
-    public List<player> searchPlayers(String name) {
+    public List<Player> searchPlayers(String name) {
         return playerRepository.findByNameContainingIgnoreCase(name);
     }
 }

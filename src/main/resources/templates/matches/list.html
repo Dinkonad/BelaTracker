@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="hr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Partije</title>
+    <link rel="stylesheet" th:href="@{/style.css}"/>
+</head>
+<body>
+
+<nav>
+    <a class="logo" href="/">🎴 Bela Tracker</a>
+    <div>
+        <a href="/">Početna</a>
+        <a href="/matches">Partije</a>
+        <a href="/players">Igrači</a>
+        <a href="/statistics">Statistika</a>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="page-head">
+        <h2>Partije</h2>
+        <a href="/matches/new" class="btn">+ Nova partija</a>
+    </div>
+
+    <table>
+        <tr>
+            <th>Datum</th>
+            <th>MI</th>
+            <th>VI</th>
+            <th>Rezultat</th>
+            <th>Status</th>
+            <th>Akcije</th>
+        </tr>
+        <tr th:each="m : ${matches}">
+            <td th:text="${m.date}"></td>
+            <td th:text="${m.team1Player1.name + ' & ' + m.team1Player2.name}"></td>
+            <td th:text="${m.team2Player1.name + ' & ' + m.team2Player2.name}"></td>
+            <td th:text="${m.team1Total + ' : ' + m.team2Total}"></td>
+            <td>
+                <span th:if="${m.finished}" class="badge badge-done"
+                      th:text="'Pobjeda: ' + (${m.winner == 1} ? 'MI' : 'VI')">Gotovo</span>
+                <span th:unless="${m.finished}" class="badge badge-live">U tijeku</span>
+            </td>
+            <td>
+                <a th:href="@{/matches/{id}(id=${m.id})}">Otvori blok</a>
+                <a th:href="@{/matches/delete/{id}(id=${m.id})}"
+                   onclick="return confirm('Obrisati partiju?');">Obriši</a>
+            </td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(matches)}">
+            <td colspan="6" style="text-align:center;color:#888;">Nema partija. Kreni s novom!</td>
+        </tr>
+    </table>
+</div>
+
+</body>
+</html>

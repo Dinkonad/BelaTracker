@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="hr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Statistika</title>
+    <link rel="stylesheet" th:href="@{/style.css}"/>
+</head>
+<body>
+
+<nav>
+    <a class="logo" href="/">🎴 Bela Tracker</a>
+    <div>
+        <a href="/">Početna</a>
+        <a href="/matches">Partije</a>
+        <a href="/players">Igrači</a>
+        <a href="/statistics">Statistika</a>
+    </div>
+</nav>
+
+<div class="container">
+    <h2>Rang lista</h2>
+
+    <table>
+        <tr>
+            <th>#</th>
+            <th>Igrač</th>
+            <th>Pobjede</th>
+            <th>Porazi</th>
+            <th>Odigrano</th>
+            <th>% pobjeda</th>
+        </tr>
+        <tr th:each="p, stat : ${players}">
+            <td th:text="${stat.count}">1</td>
+            <td th:text="${p.name + (p.nickname != null and !p.nickname.isEmpty() ? ' (' + p.nickname + ')' : '')}"></td>
+            <td th:text="${p.wins}"></td>
+            <td th:text="${p.losses}"></td>
+            <td th:text="${p.wins + p.losses}"></td>
+            <td th:text="${(p.wins + p.losses) == 0 ? '—' : #numbers.formatDecimal(p.wins * 100.0 / (p.wins + p.losses), 1, 0) + '%'}"></td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(players)}">
+            <td colspan="6" style="text-align:center;color:#888;">Još nema odigranih partija.</td>
+        </tr>
+    </table>
+</div>
+
+</body>
+</html>

@@ -6,7 +6,7 @@ import belatracker.service.PlayerService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import java.time.LocalDate;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequestMapping("/matches")
@@ -40,20 +40,35 @@ public class MatchController {
                        @RequestParam Long team2Player1Id,
                        @RequestParam Long team2Player2Id) {
 
-        match.setDate(LocalDate.now());
         match.setTeam1Player1(playerService.getPlayerById(team1Player1Id));
         match.setTeam1Player2(playerService.getPlayerById(team1Player2Id));
         match.setTeam2Player1(playerService.getPlayerById(team2Player1Id));
         match.setTeam2Player2(playerService.getPlayerById(team2Player2Id));
 
-        if (match.getTeam1Score() > match.getTeam2Score()) {
-            match.setWinner(1);
-        } else {
-            match.setWinner(2);
-        }
+        Match saved = matchService.saveMatch(match);
+        return "redirect:/matches/" + saved.getId();
+    }
 
-        matchService.saveMatch(match);
-        return "redirect:/matches";
+    @GetMapping("/{id}")
+    public String board(@PathVariable Long id, Model model) {
+        model.addAttribute("match", matchService.getMatchById(id));
+        return "matches/board";
+    }
+
+    @PostMapping("/{id}/dealer")
+    public String setDealer(@PathVariable Long id, @RequestParam String dealer) {
+        matchService.setDealer(id, dealer);
+        return "redirect:/matches/" + id;
+    }
+
+    @GetMapping("/{id}/finish")
+    public String finish(@PathVariable Long id, RedirectAttributes ra) {
+        try {
+            matchService.finishMatch(id);
+        } catch (IllegalStateException e) {
+            ra.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/matches/" + id;
     }
 
     @GetMapping("/delete/{id}")

@@ -1,25 +1,45 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="hr" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <title>Igrač</title>
+    <link rel="stylesheet" th:href="@{/style.css}"/>
 </head>
 <body>
-<h1>Igrač</h1>
-<form method="post" action="/players/save">
-    <input type="hidden" th:field="*{id}" th:object="${player}"/>
 
-    <label>Ime:</label>
-    <input type="text" th:field="*{name}" th:object="${player}"/>
-    <span th:errors="*{name}" style="color:red"></span>
-    <br/>
+<nav>
+    <a class="logo" href="/">🎴 Bela Tracker</a>
+    <div>
+        <a href="/">Početna</a>
+        <a href="/matches">Partije</a>
+        <a href="/players">Igrači</a>
+        <a href="/statistics">Statistika</a>
+    </div>
+</nav>
 
-    <label>Nadimak:</label>
-    <input type="text" th:field="*{nickname}" th:object="${player}"/>
-    <br/>
+<div class="container">
+    <h2 th:text="${player.id != null} ? 'Uredi igrača' : 'Novi igrač'">Igrač</h2>
 
-    <button type="submit">Spremi</button>
-    <a href="/players">Odustani</a>
-</form>
+    <div class="form-card">
+        <form method="post" th:action="@{/players/save}" th:object="${player}">
+            <input type="hidden" th:field="*{id}"/>
+
+            <div class="form-group">
+                <label>Ime:</label>
+                <input type="text" th:field="*{name}"/>
+                <span class="error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></span>
+            </div>
+
+            <div class="form-group">
+                <label>Nadimak:</label>
+                <input type="text" th:field="*{nickname}"/>
+            </div>
+
+            <button type="submit" class="btn">Spremi</button>
+            <a href="/players" class="btn btn-outline">Odustani</a>
+        </form>
+    </div>
+</div>
+
 </body>
 </html>
