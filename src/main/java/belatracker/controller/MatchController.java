@@ -1,12 +1,12 @@
 package belatracker.controller;
 
 import belatracker.model.Match;
+import belatracker.model.Player;
 import belatracker.service.MatchService;
 import belatracker.service.PlayerService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequestMapping("/matches")
@@ -51,29 +51,35 @@ public class MatchController {
 
     @GetMapping("/{id}")
     public String board(@PathVariable Long id, Model model) {
-        model.addAttribute("match", matchService.getMatchById(id));
-        return "matches/board";
-    }
+        Match m = matchService.getMatchById(id);
+        model.addAttribute("match", m);
 
-    @PostMapping("/{id}/dealer")
-    public String setDealer(@PathVariable Long id, @RequestParam String dealer) {
-        matchService.setDealer(id, dealer);
-        return "redirect:/matches/" + id;
-    }
-
-    @GetMapping("/{id}/finish")
-    public String finish(@PathVariable Long id, RedirectAttributes ra) {
-        try {
-            matchService.finishMatch(id);
-        } catch (IllegalStateException e) {
-            ra.addFlashAttribute("error", e.getMessage());
+        // Rotacija dijeljenja NALIJEVO (suprotno od kazaljke):
+        // gore (MI1) -> lijevo (VI1) -> dolje (MI2) -> desno (VI2)
+        String[] order = {
+                nameOf(m.getTeam1Player1()),
+                nameOf(m.getTeam2Player1()),
+                nameOf(m.getTeam1Player2()),
+                nameOf(m.getTeam2Player2())
+        };
+        int start = 0;
+        if (m.getDealer() != null) {
+            for (int i = 0; i < order.length; i++) {
+                if (order[i] != null && order[i].equalsIgnoreCase(m.getDealer())) { start = i; break; }
+            }
         }
-        return "redirect:/matches/" + id;
+        int pos = (start + m.getRounds().size()) % 4;
+        model.addAttribute("dealerName", order[pos]);
+        return "matches/board";
     }
 
     @GetMapping("/delete/{id}")
     public String delete(@PathVariable Long id) {
         matchService.deleteMatch(id);
         return "redirect:/matches";
+    }
+
+    private String nameOf(Player p) {
+        return p == null ? null : p.getName();
     }
 }

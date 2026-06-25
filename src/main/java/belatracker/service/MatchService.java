@@ -37,7 +37,6 @@ public class MatchService {
                 .orElseThrow(() -> new RuntimeException("Partija nije pronađena, id: " + id));
     }
 
-    /** Kreiranje nove partije: provjeri igrače, postavi datum, spremi (bez rundi). */
     @Transactional
     public Match saveMatch(Match match) {
         Player p1 = match.getTeam1Player1();
@@ -57,7 +56,6 @@ public class MatchService {
     @Transactional
     public void deleteMatch(Long id) {
         Match match = getMatchById(id);
-        // ako je partija bila zaključena, vrati statistiku natrag prije brisanja
         if (match.isFinished() && match.getWinner() != 0) {
             applyResult(match, -1);
         }
@@ -68,13 +66,11 @@ public class MatchService {
 
     @Transactional
     public void addRound(Long matchId, Round round) {
-        Match match = getMatchById(matchId);
-        if (match.isFinished()) {
-            throw new IllegalStateException("Partija je zaključena, nije moguće dodavati dijeljenja.");
-        }
+        Match m = getMatchById(matchId);
         round.setId(null);
-        round.setMatch(match);
+        round.setMatch(m);
         roundRepository.save(round);
+        recomputeStatus(m);
     }
 
     public Round getRound(Long roundId) {
@@ -83,47 +79,51 @@ public class MatchService {
     }
 
     @Transactional
-    public void updateRound(Round round) {
+    public void updateRound(Long matchId, Round round) {
         Round existing = getRound(round.getId());
         existing.setTeam1Score(round.getTeam1Score());
         existing.setTeam2Score(round.getTeam2Score());
         existing.setCaller(round.getCaller());
         roundRepository.save(existing);
+        recomputeStatus(getMatchById(matchId));
     }
 
     @Transactional
-    public void deleteRound(Long roundId) {
+    public void deleteRound(Long matchId, Long roundId) {
         roundRepository.deleteById(roundId);
+        recomputeStatus(getMatchById(matchId));
     }
 
-    @Transactional
-    public void setDealer(Long matchId, String dealer) {
-        Match match = getMatchById(matchId);
-        match.setDealer(dealer);
-        matchRepository.save(match);
-    }
+    // ---------- AUTOMATSKI ZAVRŠETAK ----------
 
-    // ---------- ZAKLJUČIVANJE PARTIJE ----------
+    /**
+     * Partija je gotova kad neka ekipa pređe ciljani broj bodova.
+     * Ako su obje prešle, pobjeđuje ona s većim zbrojem.
+     * Statistika igrača se automatski ažurira / poništava kako se status mijenja.
+     */
+    private void recomputeStatus(Match m) {
+        int t1 = roundRepository.sumTeam1(m.getId());
+        int t2 = roundRepository.sumTeam2(m.getId());
 
-    /** Zaključi partiju: odredi pobjednika po ukupnom rezultatu i ažuriraj statistiku. */
-    @Transactional
-    public void finishMatch(Long id) {
-        Match match = getMatchById(id);
-        if (match.isFinished()) {
-            return; // već zaključena, ne diraj statistiku ponovno
+        boolean shouldFinish = Math.max(t1, t2) >= m.getTargetScore() && t1 != t2;
+        int newWinner = shouldFinish ? (t1 > t2 ? 1 : 2) : 0;
+
+        // status se promijenio? prvo poništi staru statistiku ako treba
+        if (m.isFinished() && m.getWinner() != newWinner) {
+            applyResult(m, -1);          // koristi stari m.getWinner()
+            m.setFinished(false);
+            m.setWinner(0);
         }
-        int t1 = match.getTeam1Total();
-        int t2 = match.getTeam2Total();
-        if (t1 == t2) {
-            throw new IllegalStateException("Rezultat je izjednačen – partiju nije moguće zaključiti.");
+        // novo zaključenje
+        if (shouldFinish && !m.isFinished()) {
+            m.setWinner(newWinner);
+            m.setFinished(true);
+            applyResult(m, +1);
         }
-        match.setWinner(t1 > t2 ? 1 : 2);
-        match.setFinished(true);
-        applyResult(match, +1);
-        matchRepository.save(match);
+        matchRepository.save(m);
     }
 
-    /** Dodaje (sign=+1) ili poništava (sign=-1) pobjede/poraze za sudionike partije. */
+    /** Dodaje (sign=+1) ili poništava (sign=-1) pobjede/poraze sudionika. */
     private void applyResult(Match match, int sign) {
         int winner = match.getWinner();
         if (winner == 0) return;

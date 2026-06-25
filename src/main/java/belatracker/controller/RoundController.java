@@ -33,7 +33,7 @@ public class RoundController {
     @PostMapping("/save")
     public String save(@PathVariable Long matchId, @ModelAttribute Round round) {
         if (round.getId() != null) {
-            matchService.updateRound(round);
+            matchService.updateRound(matchId, round);
         } else {
             matchService.addRound(matchId, round);
         }
@@ -42,7 +42,7 @@ public class RoundController {
 
     @GetMapping("/delete/{roundId}")
     public String delete(@PathVariable Long matchId, @PathVariable Long roundId) {
-        matchService.deleteRound(roundId);
+        matchService.deleteRound(matchId, roundId);
         return "redirect:/matches/" + matchId;
     }
 }

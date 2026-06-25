@@ -3,57 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <title>Dijeljenje</title>
+    <link rel="stylesheet" th:href="@{/style.css}"/>
     <style>
-        body { font-family:'Roboto',sans-serif; background:#F1EFEC; padding:24px; margin:0; }
-        .card { max-width:420px; margin:0 auto; background:#123458; border-radius:16px;
-                padding:22px; color:#fff; }
-        h1 { font-size:20px; margin:0 0 18px; }
-        .score-row { display:flex; gap:16px; align-items:center; justify-content:center; margin-bottom:18px; }
-        .col { text-align:center; }
-        .col span { display:block; font-weight:700; margin-bottom:6px; font-size:18px; }
-        .col input { width:100px; padding:12px; font-size:22px; text-align:center;
-                     border:none; border-radius:8px; }
-        .sep { font-size:24px; font-weight:700; }
-        .caller { margin-bottom:18px; }
-        .caller label { font-size:13px; opacity:.85; display:block; margin-bottom:6px; }
-        .caller select { width:100%; padding:10px; border:none; border-radius:8px; font-size:15px; }
-        .save-btn { width:100%; padding:14px; border:none; border-radius:8px;
-                    font-size:16px; cursor:pointer; background:#5D8AA8; color:#fff; }
-        .back { display:block; text-align:center; margin-top:14px; color:#9bbdd1; text-decoration:none; font-size:14px; }
+        .form-card { margin: 0 auto; }
+        .score-row { display:flex; gap:16px; align-items:flex-end; justify-content:center; margin-bottom:18px; }
+        .score-col { text-align:center; }
+        .score-col label { margin-bottom:8px; font-size:18px; font-weight:700; }
+        .score-col.mi label { color:#ef5350; }
+        .score-col.vi label { color:#ffca28; }
+        .score-col input { width:110px; padding:14px; font-size:28px; text-align:center; margin-bottom:0; }
+        .sep { font-size:26px; font-weight:700; color:#888; padding-bottom:12px; }
+        .row-actions { display:flex; gap:10px; margin-top:6px; }
     </style>
 </head>
 <body>
-<div class="card">
-    <h1 th:text="${round.id != null} ? 'Uredi dijeljenje' : 'Novo dijeljenje'">Dijeljenje</h1>
 
-    <form th:action="@{'/matches/' + ${matchId} + '/rounds/save'}" method="post" th:object="${round}">
-        <input type="hidden" th:field="*{id}"/>
+<nav>
+    <a class="logo" href="/">🎴 Bela Tracker</a>
+    <div>
+        <a href="/">Početna</a>
+        <a href="/matches">Partije</a>
+        <a href="/players">Igrači</a>
+        <a href="/statistics">Statistika</a>
+    </div>
+</nav>
 
-        <div class="score-row">
-            <div class="col">
-                <span>MI</span>
-                <input type="number" th:field="*{team1Score}" min="0" placeholder="0" required/>
+<div class="container">
+    <h2 style="text-align:center;"
+        th:text="${round.id != null} ? 'Uredi dijeljenje' : 'Novo dijeljenje'">Dijeljenje</h2>
+
+    <div class="form-card">
+        <form th:action="@{'/matches/' + ${matchId} + '/rounds/save'}" method="post" th:object="${round}">
+            <input type="hidden" th:field="*{id}"/>
+
+            <div class="score-row">
+                <div class="score-col mi">
+                    <label>MI</label>
+                    <input type="number" th:field="*{team1Score}" min="0" placeholder="0" required/>
+                </div>
+                <div class="sep">:</div>
+                <div class="score-col vi">
+                    <label>VI</label>
+                    <input type="number" th:field="*{team2Score}" min="0" placeholder="0" required/>
+                </div>
             </div>
-            <div class="sep">:</div>
-            <div class="col">
-                <span>VI</span>
-                <input type="number" th:field="*{team2Score}" min="0" placeholder="0" required/>
+
+            <div class="form-group">
+                <label>Tko je zvao</label>
+                <select th:field="*{caller}">
+                    <option value="0">—</option>
+                    <option value="1">MI</option>
+                    <option value="2">VI</option>
+                </select>
             </div>
-        </div>
 
-        <div class="caller">
-            <label>Tko je zvao</label>
-            <select th:field="*{caller}">
-                <option value="0">—</option>
-                <option value="1">MI</option>
-                <option value="2">VI</option>
-            </select>
-        </div>
-
-        <button type="submit" class="save-btn">Spremi dijeljenje</button>
-    </form>
-
-    <a class="back" th:href="@{'/matches/' + ${matchId}}">← Natrag na blok</a>
+            <div class="row-actions">
+                <button type="submit" class="btn">Spremi</button>
+                <a th:href="@{'/matches/' + ${matchId}}" class="btn btn-outline">Odustani</a>
+                <a th:if="${round.id != null}" class="btn btn-danger"
+                   th:href="@{'/matches/' + ${matchId} + '/rounds/delete/' + ${round.id}}"
+                   onclick="return confirm('Obrisati ovo dijeljenje?');">Obriši</a>
+            </div>
+        </form>
+    </div>
 </div>
+
 </body>
 </html>
