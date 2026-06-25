@@ -3,78 +3,296 @@
 <head>
     <meta charset="UTF-8">
     <title>Nova partija</title>
+    <link rel="stylesheet" th:href="@{/style.css}"/>
     <style>
-        body { font-family: 'Roboto', sans-serif; background:#F1EFEC; padding:24px; margin:0; }
-        .card { max-width:640px; margin:0 auto; background:#fff; border-radius:12px;
-                padding:24px; box-shadow:0 2px 12px rgba(0,0,0,.08); }
-        h1 { color:#123458; font-size:22px; margin:0 0 6px; }
-        .sub { color:#7a7a7a; font-size:14px; margin:0 0 20px; }
+        .form-card { margin: 0 auto; }
+        .team-panel { background:#0f1f0f; border:1px solid #2d5a2d; border-radius:12px;
+                      padding:18px; margin-bottom:18px; }
+        .team-panel h3 { margin:0 0 14px; font-size:15px; letter-spacing:.06em; }
+        .team-panel.mi h3 { color:#4caf50; }
+        .team-panel.vi h3 { color:#5D8AA8; }
+        .team-panel.vi { border-color:#3a5a6e; }
 
-        .team-row { display:flex; align-items:center; gap:12px; padding:14px;
-                    border-radius:10px; margin-bottom:12px; }
-        .team-row.mi { background:#123458; }
-        .team-row.vi { background:#5D8AA8; }
-        .team-label { color:#fff; font-weight:700; width:48px; font-size:18px; }
-        select, .txt { flex:1; padding:10px; border:none; border-radius:8px;
-                 background:#F1EFEC; color:#123458; font-size:15px; }
+        .ac { position:relative; margin-bottom:12px; }
+        .ac:last-child { margin-bottom:0; }
+        .ac .ac-input { margin-bottom:0 !important; }
+        .ac-list { position:absolute; left:0; right:0; top:calc(100% + 4px); z-index:40;
+                   background:#0c1a0c; border:1px solid #2d5a2d; border-radius:10px;
+                   max-height:240px; overflow-y:auto; display:none; padding:4px;
+                   box-shadow:0 12px 30px rgba(0,0,0,.5); }
+        .ac-list.open { display:block; }
+        .ac-item { padding:9px 12px; cursor:pointer; font-size:14px; border-radius:7px;
+                   display:flex; align-items:center; gap:10px; color:#e6efe6; }
+        .ac-item small { color:#7f9c7f; font-size:12px; }
+        .ac-item:hover, .ac-item.active { background:#1c3a1c; color:#9af0ab; }
+        .ac-ava { width:28px; height:28px; border-radius:50%; background:#2d5a2d;
+                  color:#bdf0bd; font-size:13px; font-weight:700; flex-shrink:0;
+                  display:flex; align-items:center; justify-content:center; }
+        .ac-empty { padding:12px 14px; color:#8a8a8a; font-size:13px; }
 
-        .extra { margin-top:14px; }
-        .extra label { display:block; color:#123458; font-size:13px; margin-bottom:4px; }
-        .extra input, .extra select { width:100%; padding:10px; border:1px solid #D4C9BE;
-                 border-radius:8px; background:#fff; color:#123458; font-size:15px; box-sizing:border-box; }
+        .target-group { display:flex; gap:10px; }
+        .target-group label { flex:1; margin:0; cursor:pointer; }
+        .target-group input { position:absolute; opacity:0; pointer-events:none; }
+        .target-group span { display:block; text-align:center; padding:12px;
+                             border:1px solid #2d5a2d; border-radius:8px; color:#cccccc; transition:.15s; }
+        .target-group input:checked + span { background:#4caf50; color:#fff;
+                             border-color:#4caf50; font-weight:600; }
 
-        .save-btn { width:100%; padding:14px; border:none; border-radius:8px;
-                    font-size:16px; cursor:pointer; margin-top:16px; background:#123458; color:#fff; }
-        .back { display:inline-block; margin-top:12px; color:#5D8AA8; text-decoration:none; font-size:14px; }
+        .form-error { color:#f44336; font-size:14px; margin:4px 0 12px; display:none; }
+        .form-error.show { display:block; }
     </style>
 </head>
 <body>
-<div class="card">
-    <h1>Nova partija</h1>
-    <p class="sub">Odaberi parove. Rezultat (dijeljenja) upisuješ na bloku nakon kreiranja.</p>
 
-    <form th:action="@{/matches/save}" method="post">
+<nav>
+    <a class="logo" href="/">🎴 Bela Tracker</a>
+    <div>
+        <a href="/">Početna</a>
+        <a href="/matches">Partije</a>
+        <a href="/players">Igrači</a>
+        <a href="/statistics">Statistika</a>
+    </div>
+</nav>
 
-        <!-- RED 1: MI -->
-        <div class="team-row mi">
-            <span class="team-label">MI</span>
-            <select name="team1Player1Id" required>
-                <option value="" disabled selected>Igrač 1</option>
-                <option th:each="p : ${players}" th:value="${p.id}" th:text="${p.name}"></option>
-            </select>
-            <select name="team1Player2Id" required>
-                <option value="" disabled selected>Igrač 2</option>
-                <option th:each="p : ${players}" th:value="${p.id}" th:text="${p.name}"></option>
-            </select>
-        </div>
-
-        <!-- RED 2: VI -->
-        <div class="team-row vi">
-            <span class="team-label">VI</span>
-            <select name="team2Player1Id" required>
-                <option value="" disabled selected>Igrač 1</option>
-                <option th:each="p : ${players}" th:value="${p.id}" th:text="${p.name}"></option>
-            </select>
-            <select name="team2Player2Id" required>
-                <option value="" disabled selected>Igrač 2</option>
-                <option th:each="p : ${players}" th:value="${p.id}" th:text="${p.name}"></option>
-            </select>
-        </div>
-
-        <div class="extra">
-            <label>Tko prvi dijeli (neobavezno)</label>
-            <input class="txt" type="text" name="dealer" placeholder="npr. Ime igrača"/>
-        </div>
-
-        <div class="extra">
-            <label>Igra se do</label>
-            <input type="number" name="targetScore" value="1001" min="101"/>
-        </div>
-
-        <button type="submit" class="save-btn">Kreiraj partiju</button>
-    </form>
-
-    <a class="back" href="/matches">← Natrag na partije</a>
+<!-- Izvor podataka o igračima (čita ga JS) -->
+<div id="player-source" hidden>
+    <span class="pd" th:each="p : ${players}"
+          th:attr="data-id=${p.id},data-name=${p.name},data-nick=${p.nickname}"></span>
 </div>
+
+<div class="container">
+    <h2 style="text-align:center;">Nova partija</h2>
+
+    <div class="form-card">
+        <form id="matchForm" th:action="@{/matches/save}" method="post">
+
+            <!-- MI -->
+            <div class="team-panel mi">
+                <h3>MI</h3>
+                <div class="ac">
+                    <input type="text" class="ac-input" placeholder="Upiši ime igrača 1..." autocomplete="off"/>
+                    <input type="hidden" name="team1Player1Id" class="ac-id"/>
+                    <div class="ac-list"></div>
+                </div>
+                <div class="ac">
+                    <input type="text" class="ac-input" placeholder="Upiši ime igrača 2..." autocomplete="off"/>
+                    <input type="hidden" name="team1Player2Id" class="ac-id"/>
+                    <div class="ac-list"></div>
+                </div>
+            </div>
+
+            <!-- VI -->
+            <div class="team-panel vi">
+                <h3>VI</h3>
+                <div class="ac">
+                    <input type="text" class="ac-input" placeholder="Upiši ime igrača 1..." autocomplete="off"/>
+                    <input type="hidden" name="team2Player1Id" class="ac-id"/>
+                    <div class="ac-list"></div>
+                </div>
+                <div class="ac">
+                    <input type="text" class="ac-input" placeholder="Upiši ime igrača 2..." autocomplete="off"/>
+                    <input type="hidden" name="team2Player2Id" class="ac-id"/>
+                    <div class="ac-list"></div>
+                </div>
+            </div>
+
+            <!-- Tko prvi zove -->
+            <div class="form-group">
+                <label>Tko prvi zove</label>
+                <select id="firstCaller" name="dealer">
+                    <option value="" disabled selected>Prvo odaberi igrače</option>
+                </select>
+            </div>
+
+            <!-- Igra se do -->
+            <div class="form-group">
+                <label>Igra se do</label>
+                <div class="target-group">
+                    <label><input type="radio" name="targetScore" value="501"/><span>501</span></label>
+                    <label><input type="radio" name="targetScore" value="701"/><span>701</span></label>
+                    <label><input type="radio" name="targetScore" value="1001" checked/><span>1001</span></label>
+                </div>
+            </div>
+
+            <div id="formError" class="form-error"></div>
+
+            <button type="submit" class="btn">Kreiraj partiju</button>
+            <a href="/matches" class="btn btn-outline">Odustani</a>
+        </form>
+    </div>
+</div>
+
+<script>
+    (function(){
+        // Učitaj igrače iz skrivenih HTML elemenata
+        var PLAYERS = Array.prototype.slice.call(
+            document.querySelectorAll('#player-source .pd')
+        ).map(function(el){
+            return {
+                id: el.getAttribute('data-id'),
+                name: el.getAttribute('data-name') || '',
+                nick: el.getAttribute('data-nick') || ''
+            };
+        });
+
+        function escapeHtml(s){
+            return (s == null ? '' : String(s)).replace(/[&<>"']/g, function(c){
+                return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+            });
+        }
+
+        var slots = Array.prototype.slice.call(document.querySelectorAll('.ac'));
+
+        function chosenIdsExcept(slot){
+            return slots.filter(function(s){ return s !== slot; })
+                        .map(function(s){ return s.querySelector('.ac-id').value; })
+                        .filter(Boolean);
+        }
+
+        function available(slot){
+            var taken = chosenIdsExcept(slot);
+            return PLAYERS.filter(function(p){ return taken.indexOf(String(p.id)) === -1; });
+        }
+
+        function listItems(slot){
+            return Array.prototype.slice.call(slot.querySelectorAll('.ac-item'));
+        }
+
+        function setActive(slot, idx){
+            var items = listItems(slot);
+            items.forEach(function(el){ el.classList.remove('active'); });
+            if (idx >= 0 && idx < items.length){
+                items[idx].classList.add('active');
+                items[idx].scrollIntoView({ block: 'nearest' });
+            }
+            slot.setAttribute('data-active', idx);
+        }
+
+        function renderList(slot){
+            var input = slot.querySelector('.ac-input');
+            var list = slot.querySelector('.ac-list');
+            var q = input.value.trim().toLowerCase();
+
+            var items = available(slot);
+            if (q) items = items.filter(function(p){
+                return p.name.toLowerCase().indexOf(q) !== -1 ||
+                       (p.nick && p.nick.toLowerCase().indexOf(q) !== -1);
+            });
+            items = items.slice(0, 8);
+
+            if (PLAYERS.length === 0){
+                list.innerHTML = '<div class="ac-empty">Nema igrača — dodaj ih u izborniku "Igrači".</div>';
+            } else if (items.length === 0){
+                list.innerHTML = '<div class="ac-empty">Nema podudaranja</div>';
+            } else {
+                list.innerHTML = items.map(function(p){
+                    var initial = (p.name.charAt(0) || '?').toUpperCase();
+                    return '<div class="ac-item" data-id="' + escapeHtml(p.id) + '" data-name="' + escapeHtml(p.name) + '">' +
+                        '<span class="ac-ava">' + escapeHtml(initial) + '</span>' +
+                        '<span>' + escapeHtml(p.name) +
+                            (p.nick ? ' <small>(' + escapeHtml(p.nick) + ')</small>' : '') +
+                        '</span>' +
+                    '</div>';
+                }).join('');
+            }
+            list.classList.add('open');
+            setActive(slot, items.length ? 0 : -1);
+        }
+
+        function selectPlayer(slot, id, name){
+            slot.querySelector('.ac-id').value = id;
+            slot.querySelector('.ac-input').value = name;
+            slot.querySelector('.ac-list').classList.remove('open');
+            refreshCallers();
+        }
+
+        function resolveTyped(slot){
+            var input = slot.querySelector('.ac-input');
+            var idInput = slot.querySelector('.ac-id');
+            if (idInput.value) return;
+            var txt = input.value.trim().toLowerCase();
+            if (!txt){ input.value = ''; return; }
+            var match = available(slot).find(function(p){ return p.name.toLowerCase() === txt; });
+            if (match) selectPlayer(slot, match.id, match.name);
+            else { input.value = ''; idInput.value = ''; }
+            refreshCallers();
+        }
+
+        slots.forEach(function(slot){
+            var input = slot.querySelector('.ac-input');
+            var idInput = slot.querySelector('.ac-id');
+            var list = slot.querySelector('.ac-list');
+
+            input.addEventListener('focus', function(){ renderList(slot); });
+            input.addEventListener('input', function(){
+                idInput.value = '';
+                refreshCallers();
+                renderList(slot);
+            });
+            input.addEventListener('keydown', function(e){
+                var open = list.classList.contains('open');
+                var items = listItems(slot);
+                var idx = parseInt(slot.getAttribute('data-active'), 10);
+                if (isNaN(idx)) idx = -1;
+
+                if (e.key === 'ArrowDown'){ e.preventDefault(); if(!open) renderList(slot); setActive(slot, Math.min(idx + 1, items.length - 1)); }
+                else if (e.key === 'ArrowUp'){ e.preventDefault(); setActive(slot, Math.max(idx - 1, 0)); }
+                else if (e.key === 'Enter'){
+                    if (open && items.length){
+                        e.preventDefault();
+                        var el = items[idx >= 0 ? idx : 0];
+                        selectPlayer(slot, el.getAttribute('data-id'), el.getAttribute('data-name'));
+                    }
+                }
+                else if (e.key === 'Escape'){ list.classList.remove('open'); }
+            });
+            list.addEventListener('mousedown', function(e){
+                var item = e.target.closest('.ac-item');
+                if (!item) return;
+                e.preventDefault();
+                selectPlayer(slot, item.getAttribute('data-id'), item.getAttribute('data-name'));
+            });
+            input.addEventListener('blur', function(){
+                setTimeout(function(){
+                    list.classList.remove('open');
+                    resolveTyped(slot);
+                }, 130);
+            });
+        });
+
+        function refreshCallers(){
+            var sel = document.getElementById('firstCaller');
+            var prev = sel.value;
+            var chosen = slots.map(function(s){
+                return { id: s.querySelector('.ac-id').value, name: s.querySelector('.ac-input').value };
+            }).filter(function(c){ return c.id; });
+
+            sel.innerHTML = '<option value="" disabled' + (prev ? '' : ' selected') + '>'
+                + (chosen.length ? 'Odaberi igrača' : 'Prvo odaberi igrače') + '</option>'
+                + chosen.map(function(c){
+                    return '<option value="' + escapeHtml(c.name) + '">' + escapeHtml(c.name) + '</option>';
+                }).join('');
+
+            if (chosen.some(function(c){ return c.name === prev; })) sel.value = prev;
+        }
+
+        document.getElementById('matchForm').addEventListener('submit', function(e){
+            var err = document.getElementById('formError');
+            var ids = slots.map(function(s){ return s.querySelector('.ac-id').value; });
+            if (ids.some(function(v){ return !v; })){
+                e.preventDefault();
+                err.textContent = 'Odaberi sva 4 igrača (upiši ime i odaberi iz liste).';
+                err.classList.add('show');
+                return;
+            }
+            if (!document.getElementById('firstCaller').value){
+                e.preventDefault();
+                err.textContent = 'Odaberi tko prvi zove.';
+                err.classList.add('show');
+            }
+        });
+    })();
+</script>
+
 </body>
 </html>
