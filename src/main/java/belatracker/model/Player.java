@@ -17,6 +17,10 @@ public class Player {
     private String nickname;
     private int wins = 0;
     private int losses = 0;
+    private Integer tournamentWins;
+
+    public int getTournamentWins() { return tournamentWins == null ? 0 : tournamentWins; }
+    public void setTournamentWins(int t) { this.tournamentWins = t; }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

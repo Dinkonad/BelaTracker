@@ -16,7 +16,13 @@ public class Round {
 
     private int team1Score;
     private int team2Score;
+
     private int caller;
+    private int trick1;
+    private int trick2;
+    private int decl1;
+    private int decl2;
+    private int stiglja;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -32,4 +38,19 @@ public class Round {
 
     public int getCaller() { return caller; }
     public void setCaller(int c) { this.caller = c; }
+
+    public int getTrick1() { return trick1; }
+    public void setTrick1(int t) { this.trick1 = t; }
+
+    public int getTrick2() { return trick2; }
+    public void setTrick2(int t) { this.trick2 = t; }
+
+    public int getDecl1() { return decl1; }
+    public void setDecl1(int d) { this.decl1 = d; }
+
+    public int getDecl2() { return decl2; }
+    public void setDecl2(int d) { this.decl2 = d; }
+
+    public int getStiglja() { return stiglja; }
+    public void setStiglja(int s) { this.stiglja = s; }
 }

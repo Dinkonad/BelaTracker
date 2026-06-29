@@ -239,6 +239,7 @@ label {
     border-radius: 12px;
     padding: 30px;
     max-width: 480px;
+    margin: 0 auto;
 }
 
 .search-bar {
@@ -307,3 +308,23 @@ footer {
 
 .form-error { color: #f44336; font-size: 14px; margin: 4px 0 12px; display: none; }
 .form-error.show { display: block; }
+
+.container {
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 0 20px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.container h2 {
+    text-align: center;
+    width: 100%;
+}
+
+.form-card {
+    width: 100%;
+    max-width: 480px;
+}

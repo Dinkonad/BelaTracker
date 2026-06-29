@@ -24,9 +24,4 @@ public class HomeController {
         model.addAttribute("players", playerService.getLeaderboard());
         return "statistics";
     }
-
-    @GetMapping("/tournaments")
-    public String tournaments() {
-        return "tournaments";
-    }
 }

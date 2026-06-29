@@ -54,13 +54,11 @@ public class MatchController {
         Match m = matchService.getMatchById(id);
         model.addAttribute("match", m);
 
-        // Rotacija dijeljenja NALIJEVO (suprotno od kazaljke):
-        // gore (MI1) -> lijevo (VI1) -> dolje (MI2) -> desno (VI2)
         String[] order = {
-                nameOf(m.getTeam1Player1()),
-                nameOf(m.getTeam2Player1()),
-                nameOf(m.getTeam1Player2()),
-                nameOf(m.getTeam2Player2())
+            nameOf(m.getTeam1Player1()),
+            nameOf(m.getTeam2Player1()),
+            nameOf(m.getTeam1Player2()),
+            nameOf(m.getTeam2Player2())
         };
         int start = 0;
         if (m.getDealer() != null) {

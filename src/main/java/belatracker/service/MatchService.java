@@ -61,9 +61,6 @@ public class MatchService {
         }
         matchRepository.delete(match);
     }
-
-    // ---------- RUNDE / DIJELJENJA ----------
-
     @Transactional
     public void addRound(Long matchId, Round round) {
         Match m = getMatchById(matchId);
@@ -94,13 +91,6 @@ public class MatchService {
         recomputeStatus(getMatchById(matchId));
     }
 
-    // ---------- AUTOMATSKI ZAVRŠETAK ----------
-
-    /**
-     * Partija je gotova kad neka ekipa pređe ciljani broj bodova.
-     * Ako su obje prešle, pobjeđuje ona s većim zbrojem.
-     * Statistika igrača se automatski ažurira / poništava kako se status mijenja.
-     */
     private void recomputeStatus(Match m) {
         int t1 = roundRepository.sumTeam1(m.getId());
         int t2 = roundRepository.sumTeam2(m.getId());
@@ -108,13 +98,11 @@ public class MatchService {
         boolean shouldFinish = Math.max(t1, t2) >= m.getTargetScore() && t1 != t2;
         int newWinner = shouldFinish ? (t1 > t2 ? 1 : 2) : 0;
 
-        // status se promijenio? prvo poništi staru statistiku ako treba
         if (m.isFinished() && m.getWinner() != newWinner) {
-            applyResult(m, -1);          // koristi stari m.getWinner()
+            applyResult(m, -1);
             m.setFinished(false);
             m.setWinner(0);
         }
-        // novo zaključenje
         if (shouldFinish && !m.isFinished()) {
             m.setWinner(newWinner);
             m.setFinished(true);
@@ -123,7 +111,6 @@ public class MatchService {
         matchRepository.save(m);
     }
 
-    /** Dodaje (sign=+1) ili poništava (sign=-1) pobjede/poraze sudionika. */
     private void applyResult(Match match, int sign) {
         int winner = match.getWinner();
         if (winner == 0) return;

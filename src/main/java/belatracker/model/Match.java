@@ -32,6 +32,7 @@ public class Match {
     @OneToMany(mappedBy = "match", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("id ASC")
     private List<Round> rounds = new ArrayList<>();
+
     public int getTeam1Total() {
         return rounds.stream().mapToInt(Round::getTeam1Score).sum();
     }

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="hr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Turniri</title>
+    <link rel="stylesheet" th:href="@{/style.css}"/>
+</head>
+<body>
+<nav>
+    <a class="logo" href="/">🎴 Bela Tracker</a>
+    <div>
+        <a href="/">Početna</a>
+        <a href="/matches">Partije</a>
+        <a href="/players">Igrači</a>
+        <a href="/statistics">Statistika</a>
+        <a href="/tournaments">Turniri</a>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="page-head">
+        <h2>Turniri</h2>
+        <a href="/tournaments/new" class="btn">+ Novi turnir</a>
+    </div>
+
+    <table>
+        <tr>
+            <th>Naziv</th><th>Format</th><th>Status</th><th>Pobjednik</th><th>Datum</th><th>Akcije</th>
+        </tr>
+        <tr th:each="t : ${tournaments}">
+            <td th:text="${t.name}"></td>
+            <td th:switch="${t.format.name()}">
+                <span th:case="'KNOCKOUT'">Ždrijeb</span>
+                <span th:case="'AMERICAN'">Američki</span>
+                <span th:case="'LEAGUE'">Liga</span>
+                <span th:case="'GROUPS_KNOCKOUT'">Grupe + ždrijeb</span>
+            </td>
+            <td>
+                <span th:if="${t.finished}" class="badge badge-done">Završen</span>
+                <span th:unless="${t.finished}" class="badge badge-live">U tijeku</span>
+            </td>
+            <td th:text="${t.champion} ?: '—'">—</td>
+            <td th:text="${t.date}"></td>
+            <td>
+                <a th:href="@{/tournaments/{id}(id=${t.id})}">Otvori</a>
+                <a th:href="@{/tournaments/delete/{id}(id=${t.id})}"
+                   onclick="return confirm('Obrisati turnir?');">Obriši</a>
+            </td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(tournaments)}">
+            <td colspan="6" style="text-align:center;color:#888;">Nema turnira. Kreni s novim!</td>
+        </tr>
+    </table>
+</div>
+</body>
+</html>

@@ -7,6 +7,7 @@
     <style>
         .form-card { margin: 0 auto; max-width: 560px; }
 
+        /* raspored stola */
         .table-form { display:grid; gap:14px 16px; align-items:center; margin-bottom:22px;
                       grid-template-columns: 1fr auto 1fr; grid-template-rows:auto auto auto; }
         .tf-top    { grid-column:1 / -1; grid-row:1; display:flex; justify-content:center; }
@@ -81,6 +82,7 @@
         <a href="/matches">Partije</a>
         <a href="/players">Igrači</a>
         <a href="/statistics">Statistika</a>
+        <a href="/tournaments">Turniri</a>
     </div>
 </nav>
 
@@ -183,142 +185,142 @@
 </div>
 
 <script>
-    (function(){
-        var PLAYERS = Array.prototype.slice.call(
-            document.querySelectorAll('#player-source .pd')
-        ).map(function(el){
-            return {
-                id: el.getAttribute('data-id'),
-                name: el.getAttribute('data-name') || '',
-                nick: el.getAttribute('data-nick') || ''
-            };
+(function(){
+    var PLAYERS = Array.prototype.slice.call(
+        document.querySelectorAll('#player-source .pd')
+    ).map(function(el){
+        return {
+            id: el.getAttribute('data-id'),
+            name: el.getAttribute('data-name') || '',
+            nick: el.getAttribute('data-nick') || ''
+        };
+    });
+
+    function escapeHtml(s){
+        return (s == null ? '' : String(s)).replace(/[&<>"']/g, function(c){
+            return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
         });
+    }
 
-        function escapeHtml(s){
-            return (s == null ? '' : String(s)).replace(/[&<>"']/g, function(c){
-                return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
-            });
-        }
+    var slots = Array.prototype.slice.call(document.querySelectorAll('.ac'));
 
-        var slots = Array.prototype.slice.call(document.querySelectorAll('.ac'));
+    function chosenIdsExcept(slot){
+        return slots.filter(function(s){ return s !== slot; })
+                    .map(function(s){ return s.querySelector('.ac-id').value; })
+                    .filter(Boolean);
+    }
+    function available(slot){
+        var taken = chosenIdsExcept(slot);
+        return PLAYERS.filter(function(p){ return taken.indexOf(String(p.id)) === -1; });
+    }
+    function listItems(slot){
+        return Array.prototype.slice.call(slot.querySelectorAll('.ac-item'));
+    }
+    function setActive(slot, idx){
+        var items = listItems(slot);
+        items.forEach(function(el){ el.classList.remove('active'); });
+        if (idx >= 0 && idx < items.length){ items[idx].classList.add('active'); items[idx].scrollIntoView({block:'nearest'}); }
+        slot.setAttribute('data-active', idx);
+    }
+    function renderList(slot){
+        var input = slot.querySelector('.ac-input');
+        var list = slot.querySelector('.ac-list');
+        var q = input.value.trim().toLowerCase();
+        var items = available(slot);
+        if (q) items = items.filter(function(p){
+            return p.name.toLowerCase().indexOf(q) !== -1 || (p.nick && p.nick.toLowerCase().indexOf(q) !== -1);
+        });
+        items = items.slice(0, 8);
+        if (PLAYERS.length === 0){
+            list.innerHTML = '<div class="ac-empty">Nema igrača — dodaj ih u izborniku "Igrači".</div>';
+        } else if (items.length === 0){
+            list.innerHTML = '<div class="ac-empty">Nema podudaranja</div>';
+        } else {
+            list.innerHTML = items.map(function(p){
+                var initial = (p.name.charAt(0) || '?').toUpperCase();
+                return '<div class="ac-item" data-id="' + escapeHtml(p.id) + '" data-name="' + escapeHtml(p.name) + '">' +
+                    '<span class="ac-ava">' + escapeHtml(initial) + '</span>' +
+                    '<span>' + escapeHtml(p.name) + (p.nick ? ' <small>(' + escapeHtml(p.nick) + ')</small>' : '') + '</span>' +
+                '</div>';
+            }).join('');
+        }
+        list.classList.add('open');
+        setActive(slot, items.length ? 0 : -1);
+    }
+    function selectPlayer(slot, id, name){
+        slot.querySelector('.ac-id').value = id;
+        slot.querySelector('.ac-input').value = name;
+        slot.querySelector('.ac-list').classList.remove('open');
+        refreshCallers();
+    }
+    function resolveTyped(slot){
+        var input = slot.querySelector('.ac-input');
+        var idInput = slot.querySelector('.ac-id');
+        if (idInput.value) return;
+        var txt = input.value.trim().toLowerCase();
+        if (!txt){ input.value = ''; return; }
+        var match = available(slot).find(function(p){ return p.name.toLowerCase() === txt; });
+        if (match) selectPlayer(slot, match.id, match.name);
+        else { input.value = ''; idInput.value = ''; }
+        refreshCallers();
+    }
 
-        function chosenIdsExcept(slot){
-            return slots.filter(function(s){ return s !== slot; })
-                        .map(function(s){ return s.querySelector('.ac-id').value; })
-                        .filter(Boolean);
-        }
-        function available(slot){
-            var taken = chosenIdsExcept(slot);
-            return PLAYERS.filter(function(p){ return taken.indexOf(String(p.id)) === -1; });
-        }
-        function listItems(slot){
-            return Array.prototype.slice.call(slot.querySelectorAll('.ac-item'));
-        }
-        function setActive(slot, idx){
+    slots.forEach(function(slot){
+        var input = slot.querySelector('.ac-input');
+        var idInput = slot.querySelector('.ac-id');
+        var list = slot.querySelector('.ac-list');
+
+        input.addEventListener('focus', function(){ renderList(slot); });
+        input.addEventListener('input', function(){ idInput.value = ''; refreshCallers(); renderList(slot); });
+        input.addEventListener('keydown', function(e){
+            var open = list.classList.contains('open');
             var items = listItems(slot);
-            items.forEach(function(el){ el.classList.remove('active'); });
-            if (idx >= 0 && idx < items.length){ items[idx].classList.add('active'); items[idx].scrollIntoView({block:'nearest'}); }
-            slot.setAttribute('data-active', idx);
-        }
-        function renderList(slot){
-            var input = slot.querySelector('.ac-input');
-            var list = slot.querySelector('.ac-list');
-            var q = input.value.trim().toLowerCase();
-            var items = available(slot);
-            if (q) items = items.filter(function(p){
-                return p.name.toLowerCase().indexOf(q) !== -1 || (p.nick && p.nick.toLowerCase().indexOf(q) !== -1);
-            });
-            items = items.slice(0, 8);
-            if (PLAYERS.length === 0){
-                list.innerHTML = '<div class="ac-empty">Nema igrača — dodaj ih u izborniku "Igrači".</div>';
-            } else if (items.length === 0){
-                list.innerHTML = '<div class="ac-empty">Nema podudaranja</div>';
-            } else {
-                list.innerHTML = items.map(function(p){
-                    var initial = (p.name.charAt(0) || '?').toUpperCase();
-                    return '<div class="ac-item" data-id="' + escapeHtml(p.id) + '" data-name="' + escapeHtml(p.name) + '">' +
-                        '<span class="ac-ava">' + escapeHtml(initial) + '</span>' +
-                        '<span>' + escapeHtml(p.name) + (p.nick ? ' <small>(' + escapeHtml(p.nick) + ')</small>' : '') + '</span>' +
-                    '</div>';
-                }).join('');
-            }
-            list.classList.add('open');
-            setActive(slot, items.length ? 0 : -1);
-        }
-        function selectPlayer(slot, id, name){
-            slot.querySelector('.ac-id').value = id;
-            slot.querySelector('.ac-input').value = name;
-            slot.querySelector('.ac-list').classList.remove('open');
-            refreshCallers();
-        }
-        function resolveTyped(slot){
-            var input = slot.querySelector('.ac-input');
-            var idInput = slot.querySelector('.ac-id');
-            if (idInput.value) return;
-            var txt = input.value.trim().toLowerCase();
-            if (!txt){ input.value = ''; return; }
-            var match = available(slot).find(function(p){ return p.name.toLowerCase() === txt; });
-            if (match) selectPlayer(slot, match.id, match.name);
-            else { input.value = ''; idInput.value = ''; }
-            refreshCallers();
-        }
-
-        slots.forEach(function(slot){
-            var input = slot.querySelector('.ac-input');
-            var idInput = slot.querySelector('.ac-id');
-            var list = slot.querySelector('.ac-list');
-
-            input.addEventListener('focus', function(){ renderList(slot); });
-            input.addEventListener('input', function(){ idInput.value = ''; refreshCallers(); renderList(slot); });
-            input.addEventListener('keydown', function(e){
-                var open = list.classList.contains('open');
-                var items = listItems(slot);
-                var idx = parseInt(slot.getAttribute('data-active'), 10);
-                if (isNaN(idx)) idx = -1;
-                if (e.key === 'ArrowDown'){ e.preventDefault(); if(!open) renderList(slot); setActive(slot, Math.min(idx + 1, items.length - 1)); }
-                else if (e.key === 'ArrowUp'){ e.preventDefault(); setActive(slot, Math.max(idx - 1, 0)); }
-                else if (e.key === 'Enter'){ if (open && items.length){ e.preventDefault(); var el = items[idx >= 0 ? idx : 0]; selectPlayer(slot, el.getAttribute('data-id'), el.getAttribute('data-name')); } }
-                else if (e.key === 'Escape'){ list.classList.remove('open'); }
-            });
-            list.addEventListener('mousedown', function(e){
-                var item = e.target.closest('.ac-item');
-                if (!item) return;
-                e.preventDefault();
-                selectPlayer(slot, item.getAttribute('data-id'), item.getAttribute('data-name'));
-            });
-            input.addEventListener('blur', function(){
-                setTimeout(function(){ list.classList.remove('open'); resolveTyped(slot); }, 130);
-            });
+            var idx = parseInt(slot.getAttribute('data-active'), 10);
+            if (isNaN(idx)) idx = -1;
+            if (e.key === 'ArrowDown'){ e.preventDefault(); if(!open) renderList(slot); setActive(slot, Math.min(idx + 1, items.length - 1)); }
+            else if (e.key === 'ArrowUp'){ e.preventDefault(); setActive(slot, Math.max(idx - 1, 0)); }
+            else if (e.key === 'Enter'){ if (open && items.length){ e.preventDefault(); var el = items[idx >= 0 ? idx : 0]; selectPlayer(slot, el.getAttribute('data-id'), el.getAttribute('data-name')); } }
+            else if (e.key === 'Escape'){ list.classList.remove('open'); }
         });
-
-        function refreshCallers(){
-            var sel = document.getElementById('firstCaller');
-            var prev = sel.value;
-            var chosen = slots.map(function(s){
-                return { id: s.querySelector('.ac-id').value, name: s.querySelector('.ac-input').value };
-            }).filter(function(c){ return c.id; });
-            sel.innerHTML = '<option value="" disabled' + (prev ? '' : ' selected') + '>'
-                + (chosen.length ? 'Odaberi igrača' : 'Prvo odaberi igrače') + '</option>'
-                + chosen.map(function(c){ return '<option value="' + escapeHtml(c.name) + '">' + escapeHtml(c.name) + '</option>'; }).join('');
-            if (chosen.some(function(c){ return c.name === prev; })) sel.value = prev;
-        }
-
-        document.getElementById('matchForm').addEventListener('submit', function(e){
-            var err = document.getElementById('formError');
-            var ids = slots.map(function(s){ return s.querySelector('.ac-id').value; });
-            if (ids.some(function(v){ return !v; })){
-                e.preventDefault();
-                err.textContent = 'Odaberi sva 4 igrača (upiši ime i odaberi iz liste).';
-                err.classList.add('show');
-                return;
-            }
-            if (!document.getElementById('firstCaller').value){
-                e.preventDefault();
-                err.textContent = 'Odaberi tko prvi zove.';
-                err.classList.add('show');
-            }
+        list.addEventListener('mousedown', function(e){
+            var item = e.target.closest('.ac-item');
+            if (!item) return;
+            e.preventDefault();
+            selectPlayer(slot, item.getAttribute('data-id'), item.getAttribute('data-name'));
         });
-    })();
+        input.addEventListener('blur', function(){
+            setTimeout(function(){ list.classList.remove('open'); resolveTyped(slot); }, 130);
+        });
+    });
+
+    function refreshCallers(){
+        var sel = document.getElementById('firstCaller');
+        var prev = sel.value;
+        var chosen = slots.map(function(s){
+            return { id: s.querySelector('.ac-id').value, name: s.querySelector('.ac-input').value };
+        }).filter(function(c){ return c.id; });
+        sel.innerHTML = '<option value="" disabled' + (prev ? '' : ' selected') + '>'
+            + (chosen.length ? 'Odaberi igrača' : 'Prvo odaberi igrače') + '</option>'
+            + chosen.map(function(c){ return '<option value="' + escapeHtml(c.name) + '">' + escapeHtml(c.name) + '</option>'; }).join('');
+        if (chosen.some(function(c){ return c.name === prev; })) sel.value = prev;
+    }
+
+    document.getElementById('matchForm').addEventListener('submit', function(e){
+        var err = document.getElementById('formError');
+        var ids = slots.map(function(s){ return s.querySelector('.ac-id').value; });
+        if (ids.some(function(v){ return !v; })){
+            e.preventDefault();
+            err.textContent = 'Odaberi sva 4 igrača (upiši ime i odaberi iz liste).';
+            err.classList.add('show');
+            return;
+        }
+        if (!document.getElementById('firstCaller').value){
+            e.preventDefault();
+            err.textContent = 'Odaberi tko prvi zove.';
+            err.classList.add('show');
+        }
+    });
+})();
 </script>
 
 </body>

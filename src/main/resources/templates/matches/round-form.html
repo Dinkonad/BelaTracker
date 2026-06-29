@@ -5,15 +5,56 @@
     <title>Dijeljenje</title>
     <link rel="stylesheet" th:href="@{/style.css}"/>
     <style>
-        .form-card { margin: 0 auto; }
-        .score-row { display:flex; gap:16px; align-items:flex-end; justify-content:center; margin-bottom:18px; }
+        .form-card { margin: 0 auto; max-width: 540px; }
+        .block-title { color:#7fae7f; font-size:12px; letter-spacing:.1em; text-transform:uppercase;
+                       margin:18px 0 8px; }
+        .block-title:first-of-type { margin-top:0; }
+
+        .score-row { display:flex; gap:16px; align-items:flex-end; justify-content:center; }
         .score-col { text-align:center; }
-        .score-col label { margin-bottom:8px; font-size:18px; font-weight:700; }
+        .score-col label { margin-bottom:6px; font-size:16px; font-weight:700; }
         .score-col.mi label { color:#ef5350; }
         .score-col.vi label { color:#ffca28; }
-        .score-col input { width:110px; padding:14px; font-size:28px; text-align:center; margin-bottom:0; }
-        .sep { font-size:26px; font-weight:700; color:#888; padding-bottom:12px; }
-        .row-actions { display:flex; gap:10px; margin-top:6px; }
+        .score-col input { width:110px; padding:12px; font-size:28px; text-align:center; margin-bottom:0; }
+        .sep { font-size:24px; font-weight:700; color:#888; padding-bottom:12px; }
+        .hint { text-align:center; color:#8a8a8a; font-size:12px; margin-top:6px; }
+
+        .caller-row { display:flex; gap:10px; }
+        .pill { flex:1; margin:0; cursor:pointer; }
+        .pill input { position:absolute; opacity:0; pointer-events:none; }
+        .pill span { display:block; text-align:center; padding:11px; border-radius:8px;
+                     border:1px solid #2d5a2d; color:#ccc; font-weight:600; transition:.15s; }
+        .pill.mi input:checked + span { background:#ef5350; border-color:#ef5350; color:#fff; }
+        .pill.vi input:checked + span { background:#ffca28; border-color:#ffca28; color:#1a2e1a; }
+
+        .decl-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+        .decl { border:1px solid #2d5a2d; border-radius:10px; padding:10px; }
+        .decl.mi { border-top:3px solid #ef5350; }
+        .decl.vi { border-top:3px solid #ffca28; }
+        .decl-head { font-weight:700; font-size:14px; margin-bottom:8px; }
+        .decl.mi .decl-head { color:#ef5350; }
+        .decl.vi .decl-head { color:#ffca28; }
+        .decl-btns { display:flex; flex-wrap:wrap; gap:6px; }
+        .decl-btns button { border:1px solid #2d5a2d; background:#0c1a0c; color:#cfe8cf;
+                            border-radius:7px; padding:7px 9px; font-size:13px; cursor:pointer; }
+        .decl-btns button:hover { background:#1c3a1c; }
+        .decl-btns button.clr { color:#f08; border-color:#5a2d2d; color:#e88; }
+        .bela { display:flex; align-items:center; gap:6px; margin:10px 0 0; font-size:13px; color:#cfe8cf; }
+        .bela input { width:auto; margin:0; }
+
+        .stiglja-row { display:flex; gap:8px; }
+        .stiglja-row button { flex:1; border:1px solid #2d5a2d; background:#0c1a0c; color:#cfe8cf;
+                              border-radius:8px; padding:10px; cursor:pointer; font-size:13px; }
+        .stiglja-row button.active { background:#4caf50; border-color:#4caf50; color:#fff; font-weight:600; }
+
+        .preview { margin-top:18px; background:#0c1a0c; border:1px solid #2d5a2d; border-radius:12px;
+                   padding:14px; text-align:center; }
+        .pv-score { font-size:34px; font-weight:800; }
+        .pv-score #pvMi { color:#ef5350; }
+        .pv-score #pvVi { color:#ffca28; }
+        .pv-note { margin-top:6px; font-size:14px; color:#FFD166; min-height:18px; font-weight:600; }
+
+        .row-actions { display:flex; gap:10px; margin-top:18px; flex-wrap:wrap; }
     </style>
 </head>
 <body>
@@ -25,6 +66,7 @@
         <a href="/matches">Partije</a>
         <a href="/players">Igrači</a>
         <a href="/statistics">Statistika</a>
+        <a href="/tournaments">Turniri</a>
     </div>
 </nav>
 
@@ -33,28 +75,77 @@
         th:text="${round.id != null} ? 'Uredi dijeljenje' : 'Novo dijeljenje'">Dijeljenje</h2>
 
     <div class="form-card">
-        <form th:action="@{'/matches/' + ${matchId} + '/rounds/save'}" method="post" th:object="${round}">
+        <form id="roundForm" th:action="@{'/matches/' + ${matchId} + '/rounds/save'}"
+              method="post" th:object="${round}">
             <input type="hidden" th:field="*{id}"/>
+            <input type="hidden" th:field="*{team1Score}"/>
+            <input type="hidden" th:field="*{team2Score}"/>
 
+            <!-- BODOVI -->
+            <div class="block-title">Bodovi (zbroj = 162)</div>
             <div class="score-row">
                 <div class="score-col mi">
                     <label>MI</label>
-                    <input type="number" th:field="*{team1Score}" min="0" placeholder="0" required/>
+                    <input id="cardMi" type="number" min="0" max="162" placeholder="0"
+                           th:value="${round.id != null} ? ${round.team1Score} : ''"/>
                 </div>
                 <div class="sep">:</div>
                 <div class="score-col vi">
                     <label>VI</label>
-                    <input type="number" th:field="*{team2Score}" min="0" placeholder="0" required/>
+                    <input id="cardVi" type="number" min="0" max="162" placeholder="0"
+                           th:value="${round.id != null} ? ${round.team2Score} : ''"/>
+                </div>
+            </div>
+            <div class="hint">Upišeš jednu stranu — druga se sama dopuni do 162.</div>
+
+            <!-- TKO JE ZVAO -->
+            <div class="block-title">Tko je zvao</div>
+            <div class="caller-row">
+                <label class="pill mi"><input type="radio" th:field="*{caller}" value="1"/><span>MI</span></label>
+                <label class="pill vi"><input type="radio" th:field="*{caller}" value="2"/><span>VI</span></label>
+            </div>
+
+            <!-- ZVANJA -->
+            <div class="block-title">Zvanja</div>
+            <div class="decl-grid">
+                <div class="decl mi">
+                    <div class="decl-head">MI · <span id="zMiVal">0</span></div>
+                    <div class="decl-btns">
+                        <button type="button" data-team="mi" data-v="20">20</button>
+                        <button type="button" data-team="mi" data-v="50">50</button>
+                        <button type="button" data-team="mi" data-v="100">100</button>
+                        <button type="button" data-team="mi" data-v="150">150</button>
+                        <button type="button" data-team="mi" data-v="200">200</button>
+                        <button type="button" class="clr" data-team="mi" data-v="clear">×</button>
+                    </div>
+                    <label class="bela"><input type="checkbox" id="belaMi"/> Bela +20</label>
+                </div>
+                <div class="decl vi">
+                    <div class="decl-head">VI · <span id="zViVal">0</span></div>
+                    <div class="decl-btns">
+                        <button type="button" data-team="vi" data-v="20">20</button>
+                        <button type="button" data-team="vi" data-v="50">50</button>
+                        <button type="button" data-team="vi" data-v="100">100</button>
+                        <button type="button" data-team="vi" data-v="150">150</button>
+                        <button type="button" data-team="vi" data-v="200">200</button>
+                        <button type="button" class="clr" data-team="vi" data-v="clear">×</button>
+                    </div>
+                    <label class="bela"><input type="checkbox" id="belaVi"/> Bela +20</label>
                 </div>
             </div>
 
-            <div class="form-group">
-                <label>Tko je zvao</label>
-                <select th:field="*{caller}">
-                    <option value="0">—</option>
-                    <option value="1">MI</option>
-                    <option value="2">VI</option>
-                </select>
+            <!-- ŠTIGLJA -->
+            <div class="block-title">Štiglja (svi štihovi, +90)</div>
+            <div class="stiglja-row">
+                <button type="button" data-s="0" class="active">Nema</button>
+                <button type="button" data-s="1">MI sve</button>
+                <button type="button" data-s="2">VI sve</button>
+            </div>
+
+            <!-- PREGLED -->
+            <div class="preview">
+                <div class="pv-score"><span id="pvMi">0</span> : <span id="pvVi">0</span></div>
+                <div class="pv-note" id="pvNote"></div>
             </div>
 
             <div class="row-actions">
@@ -67,6 +158,116 @@
         </form>
     </div>
 </div>
+
+<script>
+(function(){
+    var TOTAL = 162;
+    var STIGLJA = 90;
+
+    var cardMi = document.getElementById('cardMi');
+    var cardVi = document.getElementById('cardVi');
+    var belaMi = document.getElementById('belaMi');
+    var belaVi = document.getElementById('belaVi');
+    var finalMi = document.querySelector('input[name="team1Score"]');
+    var finalVi = document.querySelector('input[name="team2Score"]');
+
+    var zvanjaMi = 0, zvanjaVi = 0, stiglja = 0;
+
+    function callerVal(){
+        var r = document.querySelector('input[name="caller"]:checked');
+        return r ? parseInt(r.value, 10) : 0;
+    }
+
+    function compute(){
+        var cMi, cVi;
+        if (stiglja === 1){ cMi = TOTAL; cVi = 0; }
+        else if (stiglja === 2){ cMi = 0; cVi = TOTAL; }
+        else {
+            cMi = parseInt(cardMi.value, 10) || 0;
+            cVi = parseInt(cardVi.value, 10) || 0;
+        }
+
+        var zMi = zvanjaMi + (belaMi.checked ? 20 : 0);
+        var zVi = zvanjaVi + (belaVi.checked ? 20 : 0);
+        var bonusMi = stiglja === 1 ? STIGLJA : 0;
+        var bonusVi = stiglja === 2 ? STIGLJA : 0;
+
+        var totalMi = cMi + zMi + bonusMi;
+        var totalVi = cVi + zVi + bonusVi;
+
+        var caller = callerVal();
+        var fMi = totalMi, fVi = totalVi, note = '';
+
+        // PAO: zvač mora imati VIŠE od protivnika, inače sve ide protivniku
+        if (caller === 1 && totalMi <= totalVi) {
+            fMi = 0; fVi = totalMi + totalVi; note = 'MI pali — svi bodovi idu VI';
+        } else if (caller === 2 && totalVi <= totalMi) {
+            fVi = 0; fMi = totalMi + totalVi; note = 'VI pali — svi bodovi idu MI';
+        }
+
+        finalMi.value = fMi;
+        finalVi.value = fVi;
+        document.getElementById('pvMi').textContent = fMi;
+        document.getElementById('pvVi').textContent = fVi;
+        document.getElementById('pvNote').textContent = note;
+        document.getElementById('zMiVal').textContent = zMi;
+        document.getElementById('zViVal').textContent = zVi;
+    }
+
+    function resetStiglja(){
+        stiglja = 0;
+        document.querySelectorAll('.stiglja-row button').forEach(function(b){
+            b.classList.toggle('active', b.getAttribute('data-s') === '0');
+        });
+    }
+
+    function onCard(src, dst){
+        if (stiglja !== 0) resetStiglja();
+        if (src.value === '') { dst.value = ''; compute(); return; }
+        var v = Math.max(0, Math.min(TOTAL, parseInt(src.value, 10) || 0));
+        src.value = v;
+        dst.value = TOTAL - v;
+        compute();
+    }
+    cardMi.addEventListener('input', function(){ onCard(cardMi, cardVi); });
+    cardVi.addEventListener('input', function(){ onCard(cardVi, cardMi); });
+
+    belaMi.addEventListener('change', compute);
+    belaVi.addEventListener('change', compute);
+    document.querySelectorAll('input[name="caller"]').forEach(function(r){
+        r.addEventListener('change', compute);
+    });
+
+    document.querySelectorAll('.decl-btns button').forEach(function(b){
+        b.addEventListener('click', function(){
+            var team = b.getAttribute('data-team');
+            var v = b.getAttribute('data-v');
+            if (v === 'clear'){
+                if (team === 'mi') zvanjaMi = 0; else zvanjaVi = 0;
+            } else {
+                if (team === 'mi') zvanjaMi += parseInt(v, 10); else zvanjaVi += parseInt(v, 10);
+            }
+            compute();
+        });
+    });
+
+    document.querySelectorAll('.stiglja-row button').forEach(function(b){
+        b.addEventListener('click', function(){
+            stiglja = parseInt(b.getAttribute('data-s'), 10);
+            document.querySelectorAll('.stiglja-row button').forEach(function(x){ x.classList.remove('active'); });
+            b.classList.add('active');
+            if (stiglja === 1){ cardMi.value = TOTAL; cardVi.value = 0; }
+            else if (stiglja === 2){ cardMi.value = 0; cardVi.value = TOTAL; }
+            compute();
+        });
+    });
+
+    // pri spremanju osiguraj izračun
+    document.getElementById('roundForm').addEventListener('submit', compute);
+
+    compute();
+})();
+</script>
 
 </body>
 </html>
