@@ -38,7 +38,7 @@ public class PlayerController {
     @PostMapping("/save")
     public String save(@Valid @ModelAttribute Player player, BindingResult result) {
         if (result.hasErrors()) return "players/form";
-        playerService.savePlayer(player);
+        playerService.savePlayerPreserveStats(player);
         return "redirect:/players";
     }
 

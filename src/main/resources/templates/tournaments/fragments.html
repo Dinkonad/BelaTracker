@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="hr" xmlns:th="http://www.thymeleaf.org">
 <body>
-<div th:fragment="tmatch(tm, tid)" class="tmatch">
+<div th:fragment="tmatch(tm, tid)" class="tmatch" th:if="${tm != null}">
     <span class="ta" th:classappend="${tm.winnerSide == 1} ? ' win' : ''" th:text="${tm.labelA}">A</span>
     <span class="mid">
         <span th:if="${tm.match != null}" th:text="${tm.match.team1Total} + ' : ' + ${tm.match.team2Total}">0 : 0</span>

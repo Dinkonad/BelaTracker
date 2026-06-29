@@ -120,7 +120,7 @@ public class StatisticsService {
 
         return map.values().stream()
                 .sorted(Comparator.comparingDouble((PairStats s) -> s.winPct).reversed()
-                        .thenComparingInt((PairStats s) -> s.wins).reversed())
+                        .thenComparing(Comparator.comparingInt((PairStats s) -> s.wins).reversed()))
                 .collect(Collectors.toList());
     }
 

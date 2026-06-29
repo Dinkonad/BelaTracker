@@ -24,6 +24,11 @@ public class TournamentTeam {
     @Transient public int pf;
     @Transient public int pa;
 
+    public int getPlayed() { return played; }
+    public int getWins() { return wins; }
+    public int getLosses() { return losses; }
+    public int getPf() { return pf; }
+    public int getPa() { return pa; }
     public int getDiff() { return pf - pa; }
 
     public String getLabel() {

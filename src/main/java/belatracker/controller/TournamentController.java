@@ -4,6 +4,7 @@ import belatracker.model.TournamentFormat;
 import belatracker.service.PlayerService;
 import belatracker.service.TournamentService;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -53,27 +54,33 @@ public class TournamentController {
     }
 
     @GetMapping("/{id}")
+    @Transactional
     public String view(@PathVariable Long id, Model model) {
-        service.sync(id);
-        var t = service.get(id);
-        model.addAttribute("tournament", t);
+        try {
+            service.sync(id);
+            var t = service.get(id);
+            model.addAttribute("tournament", t);
 
-        switch (t.getFormat()) {
-            case KNOCKOUT -> model.addAttribute("rounds", service.knockoutRounds(id));
-            case LEAGUE -> {
-                model.addAttribute("standings", service.buildLeagueStandings(id));
-                model.addAttribute("leagueMatches", service.leagueMatches(id));
+            switch (t.getFormat()) {
+                case KNOCKOUT -> model.addAttribute("rounds", service.knockoutRounds(id));
+                case LEAGUE -> {
+                    model.addAttribute("standings", service.buildLeagueStandings(id));
+                    model.addAttribute("leagueMatches", service.leagueMatches(id));
+                }
+                case GROUPS_KNOCKOUT -> {
+                    model.addAttribute("groups", service.buildGroups(id));
+                    model.addAttribute("rounds", service.knockoutRounds(id));
+                }
+                case AMERICAN -> {
+                    model.addAttribute("americanRounds", service.americanRounds(id));
+                    model.addAttribute("americanStandings", service.americanStandings(id));
+                }
             }
-            case GROUPS_KNOCKOUT -> {
-                model.addAttribute("groups", service.buildGroups(id));
-                model.addAttribute("rounds", service.knockoutRounds(id));
-            }
-            case AMERICAN -> {
-                model.addAttribute("americanRounds", service.americanRounds(id));
-                model.addAttribute("americanStandings", service.americanStandings(id));
-            }
+            return "tournaments/view";
+        } catch (Exception e) {
+            model.addAttribute("error", "Greška pri učitavanju turnira: " + e.getMessage());
+            return "tournaments/list";
         }
-        return "tournaments/view";
     }
 
     @GetMapping("/{id}/play/{tmId}")
