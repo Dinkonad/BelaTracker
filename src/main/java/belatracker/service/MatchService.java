@@ -53,26 +53,17 @@ public class MatchService {
         return matchRepository.save(match);
     }
 
-    /**
-     * Sprema meč bez mijenjanja statistike igrača (za turnirski quickResult).
-     */
     @Transactional
     public Match saveMatchNoStats(Match match) {
         if (match.getDate() == null) match.setDate(LocalDate.now());
         return matchRepository.save(match);
     }
 
-    /**
-     * Sprema rundu direktno bez rekomputacije statusa (za turnirski quickResult).
-     */
     @Transactional
     public void saveRoundRaw(Round round) {
         roundRepository.save(round);
     }
 
-    /**
-     * Briše meč bez mijenjanja statistike igrača.
-     */
     @Transactional
     public void deleteMatchNoStats(Long id) {
         matchRepository.findById(id).ifPresent(matchRepository::delete);

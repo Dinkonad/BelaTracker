@@ -20,7 +20,6 @@ public class TournamentMatch {
     private boolean bye = false;
     private int winnerSide = 0;
 
-    // ručno upisan rezultat (nullable da ALTER ne pukne na postojećim redovima)
     private Integer scoreA;
     private Integer scoreB;
 

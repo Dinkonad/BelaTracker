@@ -226,9 +226,6 @@ public class TournamentService {
         return saved.getId();
     }
 
-    /**
-     * Ručni unos rezultata turnirskog meča – bodovi se spremaju direktno na meč.
-     */
     @Transactional
     public void quickResult(Long tmId, int scoreA, int scoreB) {
         TournamentMatch tm = tmRepo.findById(tmId)

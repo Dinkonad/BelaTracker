@@ -209,8 +209,6 @@ public class StatisticsService {
                 ps.totalPointsAgainst += score1;
             }
         }
-
-        // streaks — iterate chronologically
         Map<Long, Integer> currentStreakMap = new HashMap<>();
         Map<Long, Integer> bestStreakMap = new HashMap<>();
 
