@@ -50,15 +50,18 @@ public class MatchController {
     }
 
     @GetMapping("/{id}")
-    public String board(@PathVariable Long id, Model model) {
+    public String board(@PathVariable Long id,
+                        @RequestParam(required = false) String back,
+                        Model model) {
         Match m = matchService.getMatchById(id);
         model.addAttribute("match", m);
+        model.addAttribute("back", back != null ? back : "/matches");
 
         String[] order = {
-            nameOf(m.getTeam1Player1()),
-            nameOf(m.getTeam2Player1()),
-            nameOf(m.getTeam1Player2()),
-            nameOf(m.getTeam2Player2())
+                nameOf(m.getTeam1Player1()),
+                nameOf(m.getTeam2Player1()),
+                nameOf(m.getTeam1Player2()),
+                nameOf(m.getTeam2Player2())
         };
         int start = 0;
         if (m.getDealer() != null) {

@@ -20,6 +20,10 @@ public class TournamentMatch {
     private boolean bye = false;
     private int winnerSide = 0;
 
+    // ručno upisan rezultat (nullable da ALTER ne pukne na postojećim redovima)
+    private Integer scoreA;
+    private Integer scoreB;
+
     @ManyToOne private TournamentTeam teamA;
     @ManyToOne private TournamentTeam teamB;
 
@@ -48,6 +52,11 @@ public class TournamentMatch {
     public void setBye(boolean b) { this.bye = b; }
     public int getWinnerSide() { return winnerSide; }
     public void setWinnerSide(int w) { this.winnerSide = w; }
+    public int getScoreA() { return scoreA == null ? 0 : scoreA; }
+    public void setScoreA(Integer s) { this.scoreA = s; }
+    public int getScoreB() { return scoreB == null ? 0 : scoreB; }
+    public void setScoreB(Integer s) { this.scoreB = s; }
+    public boolean isHasScore() { return scoreA != null && scoreB != null; }
     public TournamentTeam getTeamA() { return teamA; }
     public void setTeamA(TournamentTeam t) { this.teamA = t; }
     public TournamentTeam getTeamB() { return teamB; }

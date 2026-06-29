@@ -6,27 +6,21 @@
     <link rel="stylesheet" th:href="@{/style.css}"/>
     <style>
         .form-card { margin:0 auto; max-width:560px; }
-        .fmt-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-        .fmt { margin:0; cursor:pointer; }
-        .fmt input { position:absolute; opacity:0; pointer-events:none; }
-        .fmt span { display:block; border:1px solid #2d5a2d; border-radius:10px; padding:12px;
-                    color:#ccc; transition:.15s; }
-        .fmt span small { display:block; color:#7f9c7f; font-size:12px; margin-top:4px; font-weight:400; }
-        .fmt span b { color:#cfe8cf; }
-        .fmt input:checked + span { border-color:#4caf50; background:#132613; }
-        .fmt input:checked + span b { color:#4caf50; }
         .target-group { display:flex; gap:10px; }
         .target-group label { flex:1; margin:0; cursor:pointer; }
         .target-group input { position:absolute; opacity:0; pointer-events:none; }
         .target-group span { display:block; text-align:center; padding:11px; border:1px solid #2d5a2d;
                              border-radius:8px; color:#ccc; }
         .target-group input:checked + span { background:#4caf50; color:#fff; border-color:#4caf50; font-weight:600; }
-        .players { display:grid; grid-template-columns:1fr 1fr; gap:8px; max-height:260px; overflow-y:auto;
+        .players { display:grid; grid-template-columns:1fr 1fr; gap:8px; max-height:280px; overflow-y:auto;
                    border:1px solid #2d5a2d; border-radius:10px; padding:10px; }
         .pchk { display:flex; align-items:center; gap:8px; margin:0; color:#e6efe6; font-size:14px; }
         .pchk input { width:auto; margin:0; }
         .count { color:#8fae8f; font-size:13px; margin:8px 0; }
+        .count.bad { color:#e08; }
         .form-error { color:#f44336; margin-bottom:12px; }
+        .infobox { background:#0f1f0f; border:1px solid #2d5a2d; border-radius:10px; padding:12px 14px;
+                   color:#9bbf9b; font-size:13px; margin-bottom:18px; }
     </style>
 </head>
 <body>
@@ -45,6 +39,13 @@
     <h2 style="text-align:center;">Novi turnir</h2>
     <div class="form-card">
         <div class="form-error" th:if="${error}" th:text="${error}"></div>
+
+        <div class="infobox">
+            <b>Grupe + ždrijeb.</b> Igrači se slučajno spoje u parove (timove), timovi se rasporede u grupe,
+            igra se svako sa svakim po grupi, a 1. i 2. iz svake grupe idu u eliminacije do pobjednika.<br>
+            Treba <b>paran broj igrača, najmanje 8</b> (tj. barem 4 tima).
+        </div>
+
         <form th:action="@{/tournaments/save}" method="post">
 
             <div class="form-group">
@@ -53,24 +54,10 @@
             </div>
 
             <div class="form-group">
-                <label>Format</label>
-                <div class="fmt-grid">
-                    <label class="fmt"><input type="radio" name="format" value="KNOCKOUT" checked/>
-                        <span><b>Ždrijeb na ispadanje</b><small>Slučajni timovi, tko izgubi ispada.</small></span></label>
-                    <label class="fmt"><input type="radio" name="format" value="LEAGUE"/>
-                        <span><b>Liga</b><small>Svako sa svakim, tablica.</small></span></label>
-                    <label class="fmt"><input type="radio" name="format" value="GROUPS_KNOCKOUT"/>
-                        <span><b>Grupe + ždrijeb</b><small>Grupe pa ispadanje (8+ igrača).</small></span></label>
-                    <label class="fmt"><input type="radio" name="format" value="AMERICAN"/>
-                        <span><b>Američki</b><small>Partneri se miješaju (broj ÷ 4).</small></span></label>
-                </div>
-            </div>
-
-            <div class="form-group">
                 <label>Partija se igra do</label>
                 <div class="target-group">
-                    <label><input type="radio" name="targetScore" value="501" checked/><span>501</span></label>
-                    <label><input type="radio" name="targetScore" value="701"/><span>701</span></label>
+                    <label><input type="radio" name="targetScore" value="501"/><span>501</span></label>
+                    <label><input type="radio" name="targetScore" value="701" checked/><span>701</span></label>
                     <label><input type="radio" name="targetScore" value="1001"/><span>1001</span></label>
                 </div>
             </div>
@@ -84,10 +71,10 @@
                     </label>
                     <span th:if="${#lists.isEmpty(players)}" style="color:#888;">Nema igrača — dodaj ih prvo.</span>
                 </div>
-                <div class="count">Odabrano: <span id="cnt">0</span></div>
+                <div class="count" id="cntRow">Odabrano: <span id="cnt">0</span> (treba 8, 10, 12...)</div>
             </div>
 
-            <button type="submit" class="btn">Kreiraj turnir</button>
+            <button type="submit" class="btn">Kreiraj turnir i ždrijeb</button>
             <a href="/tournaments" class="btn btn-outline">Odustani</a>
         </form>
     </div>
@@ -95,8 +82,10 @@
 
 <script>
     function updateCount(){
-        document.getElementById('cnt').textContent =
-            document.querySelectorAll('input[name="playerIds"]:checked').length;
+        var n = document.querySelectorAll('input[name="playerIds"]:checked').length;
+        document.getElementById('cnt').textContent = n;
+        var ok = (n >= 8 && n % 2 === 0);
+        document.getElementById('cntRow').classList.toggle('bad', n > 0 && !ok);
     }
 </script>
 </body>

@@ -35,8 +35,8 @@
         </tr>
         <tr th:each="m : ${matches}">
             <td th:text="${m.date}"></td>
-            <td th:text="${m.team1Player1.name + ' & ' + m.team1Player2.name}"></td>
-            <td th:text="${m.team2Player1.name + ' & ' + m.team2Player2.name}"></td>
+            <td th:text="${(m.team1Player1 != null ? m.team1Player1.name : '?') + ' &amp; ' + (m.team1Player2 != null ? m.team1Player2.name : '?')}"></td>
+            <td th:text="${(m.team2Player1 != null ? m.team2Player1.name : '?') + ' &amp; ' + (m.team2Player2 != null ? m.team2Player2.name : '?')}"></td>
             <td th:text="${m.team1Total + ' : ' + m.team2Total}"></td>
             <td>
                 <span th:if="${m.finished}" class="badge badge-done"

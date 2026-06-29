@@ -17,32 +17,44 @@ public class RoundController {
     }
 
     @GetMapping("/new")
-    public String newForm(@PathVariable Long matchId, Model model) {
+    public String newForm(@PathVariable Long matchId,
+                          @RequestParam(required = false) String back,
+                          Model model) {
         model.addAttribute("round", new Round());
         model.addAttribute("matchId", matchId);
+        model.addAttribute("back", back != null ? back : "/matches");
         return "matches/round-form";
     }
 
     @GetMapping("/edit/{roundId}")
-    public String editForm(@PathVariable Long matchId, @PathVariable Long roundId, Model model) {
+    public String editForm(@PathVariable Long matchId, @PathVariable Long roundId,
+                           @RequestParam(required = false) String back,
+                           Model model) {
         model.addAttribute("round", matchService.getRound(roundId));
         model.addAttribute("matchId", matchId);
+        model.addAttribute("back", back != null ? back : "/matches");
         return "matches/round-form";
     }
 
     @PostMapping("/save")
-    public String save(@PathVariable Long matchId, @ModelAttribute Round round) {
+    public String save(@PathVariable Long matchId, @ModelAttribute Round round,
+                       @RequestParam(required = false) String back) {
         if (round.getId() != null) {
             matchService.updateRound(matchId, round);
         } else {
             matchService.addRound(matchId, round);
         }
-        return "redirect:/matches/" + matchId;
+        String redirect = "/matches/" + matchId;
+        if (back != null && !back.isEmpty()) redirect += "?back=" + back;
+        return "redirect:" + redirect;
     }
 
     @GetMapping("/delete/{roundId}")
-    public String delete(@PathVariable Long matchId, @PathVariable Long roundId) {
+    public String delete(@PathVariable Long matchId, @PathVariable Long roundId,
+                         @RequestParam(required = false) String back) {
         matchService.deleteRound(matchId, roundId);
-        return "redirect:/matches/" + matchId;
+        String redirect = "/matches/" + matchId;
+        if (back != null && !back.isEmpty()) redirect += "?back=" + back;
+        return "redirect:" + redirect;
     }
 }

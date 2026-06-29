@@ -1,22 +1,24 @@
 <!DOCTYPE html>
 <html lang="hr" xmlns:th="http://www.thymeleaf.org">
 <body>
-<div th:fragment="tmatch(tm, tid)" class="tmatch" th:if="${tm != null}">
-    <span class="ta" th:classappend="${tm.winnerSide == 1} ? ' win' : ''" th:text="${tm.labelA}">A</span>
+<th:block th:fragment="tmatch(tm, tid)">
+  <div th:if="${tm != null}" class="tmatch">
+    <span class="ta" th:classappend="${tm.winnerSide == 1} ? ' win' : ''" th:text="${tm.labelA}">Tim A</span>
     <span class="mid">
-        <span th:if="${tm.match != null}" th:text="${tm.match.team1Total} + ' : ' + ${tm.match.team2Total}">0 : 0</span>
-        <span th:unless="${tm.match != null}">vs</span>
+      <span th:if="${tm.winnerSide != 0 and !tm.bye}" th:text="${tm.scoreA} + ' : ' + ${tm.scoreB}">0 : 0</span>
+      <span th:if="${tm.bye}">—</span>
+      <span th:if="${tm.winnerSide == 0 and !tm.bye}">vs</span>
     </span>
-    <span class="tb" th:classappend="${tm.winnerSide == 2} ? ' win' : ''" th:text="${tm.labelB}">B</span>
+    <span class="tb" th:classappend="${tm.winnerSide == 2} ? ' win' : ''" th:text="${tm.labelB}">Tim B</span>
     <span class="act">
-        <span th:if="${tm.bye}" class="muted">slob. prolaz</span>
-        <a th:if="${!tm.bye and tm.match == null and tm.ready}" class="btn btn-sm"
-           th:href="@{'/tournaments/' + ${tid} + '/play/' + ${tm.id}}">Igraj</a>
-        <a th:if="${!tm.bye and tm.match != null and !tm.match.finished}" class="btn btn-sm btn-outline"
-           th:href="@{'/matches/' + ${tm.match.id}}">Nastavi</a>
-        <span th:if="${!tm.bye and tm.match != null and tm.match.finished}" class="muted">gotovo</span>
-        <span th:if="${!tm.bye and tm.match == null and !tm.ready}" class="muted">čeka</span>
+      <a th:if="${tm.winnerSide == 0 and !tm.bye and tm.ready}" class="btn btn-sm"
+         th:href="@{'/tournaments/' + ${tid} + '/quick/' + ${tm.id}}">Upiši rezultat</a>
+      <a th:if="${tm.winnerSide != 0 and !tm.bye}" class="btn btn-sm btn-outline"
+         th:href="@{'/tournaments/' + ${tid} + '/quick/' + ${tm.id}}">Uredi</a>
+      <span th:if="${tm.bye}" class="muted">slob. prolaz</span>
+      <span th:if="${tm.winnerSide == 0 and !tm.bye and !tm.ready}" class="muted">čeka</span>
     </span>
-</div>
+  </div>
+</th:block>
 </body>
 </html>

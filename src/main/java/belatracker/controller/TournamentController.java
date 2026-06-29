@@ -32,20 +32,18 @@ public class TournamentController {
     @GetMapping("/new")
     public String newForm(Model model) {
         model.addAttribute("players", playerService.getAllPlayers());
-        model.addAttribute("formats", TournamentFormat.values());
         return "tournaments/new";
     }
 
     @PostMapping("/save")
     public String save(@RequestParam String name,
-                       @RequestParam TournamentFormat format,
                        @RequestParam int targetScore,
                        @RequestParam(name = "playerIds", required = false) List<Long> playerIds,
                        RedirectAttributes ra) {
         try {
             if (playerIds == null || playerIds.isEmpty())
                 throw new IllegalArgumentException("Odaberi igrače za turnir.");
-            var t = service.create(name, format, targetScore, playerIds);
+            var t = service.create(name, TournamentFormat.GROUPS_KNOCKOUT, targetScore, playerIds);
             return "redirect:/tournaments/" + t.getId();
         } catch (IllegalArgumentException e) {
             ra.addFlashAttribute("error", e.getMessage());
@@ -60,38 +58,35 @@ public class TournamentController {
             service.sync(id);
             var t = service.get(id);
             model.addAttribute("tournament", t);
-
-            switch (t.getFormat()) {
-                case KNOCKOUT -> model.addAttribute("rounds", service.knockoutRounds(id));
-                case LEAGUE -> {
-                    model.addAttribute("standings", service.buildLeagueStandings(id));
-                    model.addAttribute("leagueMatches", service.leagueMatches(id));
-                }
-                case GROUPS_KNOCKOUT -> {
-                    model.addAttribute("groups", service.buildGroups(id));
-                    model.addAttribute("rounds", service.knockoutRounds(id));
-                }
-                case AMERICAN -> {
-                    model.addAttribute("americanRounds", service.americanRounds(id));
-                    model.addAttribute("americanStandings", service.americanStandings(id));
-                }
-            }
+            model.addAttribute("groups", service.buildGroups(id));
+            model.addAttribute("rounds", service.knockoutRounds(id));
             return "tournaments/view";
         } catch (Exception e) {
             model.addAttribute("error", "Greška pri učitavanju turnira: " + e.getMessage());
+            model.addAttribute("tournaments", service.getAll());
             return "tournaments/list";
         }
     }
 
-    @GetMapping("/{id}/play/{tmId}")
-    public String play(@PathVariable Long id, @PathVariable Long tmId, RedirectAttributes ra) {
+    // ---- ručni unos rezultata ----
+    @GetMapping("/{id}/quick/{tmId}")
+    @Transactional
+    public String quickForm(@PathVariable Long id, @PathVariable Long tmId, Model model) {
+        model.addAttribute("tm", service.getTournamentMatch(tmId));
+        model.addAttribute("tournamentId", id);
+        return "tournaments/quick-result";
+    }
+
+    @PostMapping("/{id}/quick/{tmId}")
+    public String quickSave(@PathVariable Long id, @PathVariable Long tmId,
+                            @RequestParam int scoreA, @RequestParam int scoreB,
+                            RedirectAttributes ra) {
         try {
-            Long matchId = service.playMatch(tmId);
-            return "redirect:/matches/" + matchId;
-        } catch (IllegalStateException e) {
+            service.quickResult(tmId, scoreA, scoreB);
+        } catch (Exception e) {
             ra.addFlashAttribute("error", e.getMessage());
-            return "redirect:/tournaments/" + id;
         }
+        return "redirect:/tournaments/" + id;
     }
 
     @GetMapping("/delete/{id}")

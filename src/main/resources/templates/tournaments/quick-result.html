@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="hr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Unesi rezultat</title>
+    <link rel="stylesheet" th:href="@{/style.css}"/>
+    <style>
+        .qr-card {
+            background: #0f1f0f;
+            border: 1px solid #2d5a2d;
+            border-radius: 14px;
+            padding: 28px 32px;
+            max-width: 480px;
+            margin: 32px auto;
+        }
+        .qr-card h2 { color: #4caf50; margin: 0 0 6px; }
+        .qr-subtitle { color: #8fae8f; font-size: 14px; margin: 0 0 28px; }
+
+        .teams-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .team-box {
+            flex: 1;
+            background: #13301a;
+            border: 1px solid #2d5a2d;
+            border-radius: 10px;
+            padding: 12px 14px;
+        }
+        .team-box label {
+            display: block;
+            color: #8fae8f;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            margin-bottom: 6px;
+        }
+        .team-box .team-name {
+            color: #cfe8cf;
+            font-weight: 700;
+            font-size: 15px;
+            margin-bottom: 10px;
+            min-height: 20px;
+        }
+        .team-box input[type=number] {
+            width: 100%;
+            font-size: 28px;
+            font-weight: 700;
+            text-align: center;
+            background: #0f1f0f;
+            border: 2px solid #2d5a2d;
+            border-radius: 8px;
+            color: #fff;
+            padding: 10px 8px;
+            box-sizing: border-box;
+        }
+        .team-box input[type=number]:focus {
+            border-color: #4caf50;
+            outline: none;
+        }
+        .vs-sep {
+            color: #4caf50;
+            font-size: 20px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .err { background: #c0392b; color: #fff; padding: 8px 12px; border-radius: 8px; margin-bottom: 16px; font-size: 14px; }
+        .note { color: #8fae8f; font-size: 13px; margin-bottom: 20px; border-left: 3px solid #2d5a2d; padding-left: 10px; }
+        .actions { display: flex; gap: 12px; margin-top: 8px; }
+    </style>
+</head>
+<body>
+<nav>
+    <a class="logo" href="/">🎴 Bela Tracker</a>
+    <div>
+        <a href="/">Početna</a>
+        <a href="/matches">Partije</a>
+        <a href="/players">Igrači</a>
+        <a href="/statistics">Statistika</a>
+        <a href="/tournaments">Turniri</a>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="qr-card">
+        <h2>Unesi rezultat</h2>
+        <p class="qr-subtitle">Ručni unos za turnirski meč — rezultat se sprema na turnir (npr. 1034 : 894).</p>
+
+        <div class="err" th:if="${error}" th:text="${error}"></div>
+
+        <p class="note">
+            Upiši koliko je bodova dobio svaki tim. Pobjednik mora imati više bodova.
+        </p>
+
+        <form th:action="@{'/tournaments/' + ${tournamentId} + '/quick/' + ${tm.id}}" method="post">
+            <div class="teams-row">
+                <div class="team-box">
+                    <label>Tim A</label>
+                    <div class="team-name" th:text="${tm.labelA}">Tim A</div>
+                    <input type="number" name="scoreA" min="0" max="9999" placeholder="0" required autofocus
+                           th:value="${tm.hasScore} ? ${tm.scoreA} : ''" />
+                </div>
+                <div class="vs-sep">vs</div>
+                <div class="team-box">
+                    <label>Tim B</label>
+                    <div class="team-name" th:text="${tm.labelB}">Tim B</div>
+                    <input type="number" name="scoreB" min="0" max="9999" placeholder="0" required
+                           th:value="${tm.hasScore} ? ${tm.scoreB} : ''" />
+                </div>
+            </div>
+
+            <div class="actions">
+                <button type="submit" class="btn">Spremi rezultat</button>
+                <a th:href="@{'/tournaments/' + ${tournamentId}}" class="btn btn-outline">Odustani</a>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>

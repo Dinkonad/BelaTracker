@@ -64,6 +64,11 @@ public class TournamentService {
         return teamRepo.findByTournamentIdOrderByIdAsc(tid);
     }
 
+    public TournamentMatch getTournamentMatch(Long tmId) {
+        return tmRepo.findById(tmId)
+                .orElseThrow(() -> new RuntimeException("Meč nije pronađen, id: " + tmId));
+    }
+
     @Transactional
     public Tournament create(String name, TournamentFormat format, int target, List<Long> playerIds) {
         List<Player> players = new ArrayList<>(playerRepo.findAllById(playerIds));
@@ -100,7 +105,7 @@ public class TournamentService {
             }
             case GROUPS_KNOCKOUT -> {
                 List<TournamentTeam> teams = pairTeams(t, players, -1);
-                int g = teams.size() >= 8 ? 4 : 2;
+                int g = Math.max(2, (int) Math.round(teams.size() / 4.0));
                 buildGroupStage(t, teams, g);
             }
             case AMERICAN -> buildAmerican(t, players);
@@ -221,20 +226,32 @@ public class TournamentService {
         return saved.getId();
     }
 
+    /**
+     * Ručni unos rezultata turnirskog meča – bodovi se spremaju direktno na meč.
+     */
+    @Transactional
+    public void quickResult(Long tmId, int scoreA, int scoreB) {
+        TournamentMatch tm = tmRepo.findById(tmId)
+                .orElseThrow(() -> new RuntimeException("Meč nije pronađen."));
+        if (!tm.isReady()) throw new IllegalStateException("Meč još nije spreman za unos.");
+        if (scoreA == scoreB) throw new IllegalArgumentException("Rezultati ne smiju biti izjednačeni.");
+        if (scoreA < 0 || scoreB < 0) throw new IllegalArgumentException("Bodovi ne mogu biti negativni.");
+
+        tm.setScoreA(scoreA);
+        tm.setScoreB(scoreB);
+        tm.setWinnerSide(scoreA > scoreB ? 1 : 2);
+        tmRepo.save(tm);
+    }
+
     @Transactional
     public void sync(Long tid) {
         Tournament t = get(tid);
         if (t.isFinished()) return;
 
         for (TournamentMatch tm : matches(tid)) {
-            if (tm.getWinnerSide() == 0) {
-                if (tm.isBye()) {
-                    tm.setWinnerSide(tm.getTeamA() != null ? 1 : 2);
-                    tmRepo.save(tm);
-                } else if (tm.getMatch() != null && tm.getMatch().isFinished()) {
-                    tm.setWinnerSide(tm.getMatch().getWinner());
-                    tmRepo.save(tm);
-                }
+            if (tm.getWinnerSide() == 0 && tm.isBye()) {
+                tm.setWinnerSide(tm.getTeamA() != null ? 1 : 2);
+                tmRepo.save(tm);
             }
         }
 
@@ -343,12 +360,12 @@ public class TournamentService {
         }
         for (TournamentMatch m : ms) {
             if (m.getTeamA() == null || m.getTeamB() == null) continue;
-            if (m.getMatch() == null || !m.getMatch().isFinished()) continue;
+            if (m.getWinnerSide() == 0 || !m.isHasScore()) continue;
             TournamentTeam A = byId.get(m.getTeamA().getId());
             TournamentTeam B = byId.get(m.getTeamB().getId());
             if (A == null || B == null) continue;
-            int sa = m.getMatch().getTeam1Total();
-            int sb = m.getMatch().getTeam2Total();
+            int sa = m.getScoreA();
+            int sb = m.getScoreB();
             A.played++; B.played++;
             A.pf += sa; A.pa += sb; B.pf += sb; B.pa += sa;
             if (m.getWinnerSide() == 1) { A.wins++; B.losses++; } else { B.wins++; A.losses++; }
@@ -360,6 +377,7 @@ public class TournamentService {
                 .thenComparing(Comparator.comparingInt(TournamentTeam::getDiff).reversed());
     }
 
+    @Transactional(readOnly = true)
     public List<TournamentTeam> buildLeagueStandings(Long tid) {
         List<TournamentTeam> teams = teams(tid);
         List<TournamentMatch> ms = tmRepo.findByTournamentIdAndPhaseOrderByRoundNoAscSlotAsc(tid, "LEAGUE");
@@ -368,10 +386,12 @@ public class TournamentService {
         return teams;
     }
 
+    @Transactional(readOnly = true)
     public List<TournamentMatch> leagueMatches(Long tid) {
         return tmRepo.findByTournamentIdAndPhaseOrderByRoundNoAscSlotAsc(tid, "LEAGUE");
     }
 
+    @Transactional(readOnly = true)
     public List<GroupView> buildGroups(Long tid) {
         List<TournamentTeam> teams = teams(tid);
         List<TournamentMatch> ms = tmRepo.findByTournamentIdAndPhaseOrderByRoundNoAscSlotAsc(tid, "GROUP");
@@ -388,6 +408,7 @@ public class TournamentService {
         return out;
     }
 
+    @Transactional(readOnly = true)
     public List<RoundView> knockoutRounds(Long tid) {
         List<TournamentMatch> ko = tmRepo.findByTournamentIdAndPhaseOrderByRoundNoAscSlotAsc(tid, "KO");
         Map<Integer, List<TournamentMatch>> byRound = new TreeMap<>();
@@ -409,6 +430,7 @@ public class TournamentService {
         };
     }
 
+    @Transactional(readOnly = true)
     public List<RoundView> americanRounds(Long tid) {
         List<TournamentMatch> ms = tmRepo.findByTournamentIdAndPhaseOrderByRoundNoAscSlotAsc(tid, "AMERICAN");
         Map<Integer, List<TournamentMatch>> byRound = new TreeMap<>();
@@ -419,6 +441,7 @@ public class TournamentService {
         return out;
     }
 
+    @Transactional(readOnly = true)
     public List<Standing> americanStandings(Long tid) {
         List<TournamentMatch> ms = tmRepo.findByTournamentIdAndPhaseOrderByRoundNoAscSlotAsc(tid, "AMERICAN");
         Map<Long, Standing> map = new LinkedHashMap<>();

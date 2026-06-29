@@ -12,16 +12,19 @@
                  border-radius:10px; padding:12px 16px; margin:16px 0; font-size:18px; font-weight:700; color:#FFD166; }
         .sect { margin-top:26px; }
         .sect h3 { color:#4caf50; margin:0 0 12px; font-size:18px; }
+        .sched-title { color:#9bbf9b; font-size:13px; letter-spacing:.05em; text-transform:uppercase; margin:14px 0 8px; }
         .round-title { color:#9bbf9b; font-size:13px; letter-spacing:.08em; text-transform:uppercase; margin:16px 0 8px; }
+        .hintbox { background:#0f1f0f; border:1px solid #2d5a2d; border-radius:10px; padding:12px 14px;
+                   color:#9bbf9b; font-size:13px; margin-top:14px; }
 
         .tmatch { display:flex; align-items:center; gap:10px; background:#0f1f0f; border:1px solid #2d5a2d;
-                  border-radius:10px; padding:10px 14px; margin-bottom:8px; }
-        .tmatch .ta, .tmatch .tb { flex:1; font-size:15px; }
+                  border-radius:10px; padding:12px 14px; margin-bottom:8px; }
+        .tmatch .ta, .tmatch .tb { flex:1; font-size:15px; color:#e6efe6; }
         .tmatch .tb { text-align:right; }
         .tmatch .win { color:#4caf50; font-weight:700; }
         .tmatch .mid { min-width:64px; text-align:center; color:#cfe8cf; font-weight:700; }
-        .tmatch .act { min-width:96px; text-align:right; }
-        .muted { color:#777; font-size:13px; }
+        .tmatch .act { min-width:140px; text-align:right; }
+        .tmatch .muted { color:#777; font-size:13px; }
         .err { background:#c0392b; color:#fff; padding:8px 12px; border-radius:8px; margin-bottom:12px; }
     </style>
 </head>
@@ -43,15 +46,7 @@
     <div class="t-head">
         <div>
             <h2 th:text="${tournament.name}">Turnir</h2>
-            <p class="t-sub">
-                <span th:switch="${tournament.format.name()}">
-                    <span th:case="'KNOCKOUT'">Ždrijeb na ispadanje</span>
-                    <span th:case="'AMERICAN'">Američki</span>
-                    <span th:case="'LEAGUE'">Liga</span>
-                    <span th:case="'GROUPS_KNOCKOUT'">Grupe + ždrijeb</span>
-                </span>
-                · partija do <span th:text="${tournament.targetScore}">701</span>
-            </p>
+            <p class="t-sub">Grupe + ždrijeb · partija do <span th:text="${tournament.targetScore}">701</span></p>
         </div>
         <a th:href="@{/tournaments/delete/{id}(id=${tournament.id})}"
            class="btn btn-danger btn-sm" onclick="return confirm('Obrisati turnir?');">Obriši turnir</a>
@@ -61,93 +56,45 @@
         🏆 Pobjednik: <span th:text="${tournament.champion}">—</span>
     </div>
 
-    <!-- ===== po formatu ===== -->
-    <div th:switch="${tournament.format.name()}">
-
-        <!-- KNOCKOUT -->
-        <div th:case="'KNOCKOUT'">
-            <div class="sect" th:each="r : ${rounds}">
-                <div class="round-title" th:text="${r.title}">Runda</div>
-                <div th:each="tm : ${r.matches}" th:replace="~{tournaments/fragments :: tmatch(${tm}, ${tournament.id})}"></div>
-            </div>
-        </div>
-
-        <!-- LEAGUE -->
-        <div th:case="'LEAGUE'">
-            <div class="sect">
-                <h3>Tablica</h3>
-                <table>
-                    <tr><th>#</th><th>Tim</th><th>Odigrano</th><th>Pobjede</th><th>Bodovi +/-</th><th>Razlika</th></tr>
-                    <tr th:each="tt, s : ${standings}">
-                        <td th:text="${s.count}">1</td>
-                        <td th:text="${tt.label}"></td>
-                        <td th:text="${tt.played}"></td>
-                        <td th:text="${tt.wins}"></td>
-                        <td th:text="${tt.pf} + ':' + ${tt.pa}"></td>
-                        <td th:text="${tt.diff}"></td>
-                    </tr>
-                </table>
-            </div>
-            <div class="sect">
-                <h3>Mečevi</h3>
-                <div th:each="tm : ${leagueMatches}" th:replace="~{tournaments/fragments :: tmatch(${tm}, ${tournament.id})}"></div>
-            </div>
-        </div>
-
-        <!-- GROUPS + KNOCKOUT -->
-        <div th:case="'GROUPS_KNOCKOUT'">
-            <div class="sect" th:each="g : ${groups}">
-                <h3 th:text="${g.title}">Grupa</h3>
-                <table>
-                    <tr><th>#</th><th>Tim</th><th>Odig.</th><th>Pob.</th><th>+/-</th><th>Razlika</th></tr>
-                    <tr th:each="tt, s : ${g.standings}">
-                        <td th:text="${s.count}">1</td>
-                        <td th:text="${tt.label}"></td>
-                        <td th:text="${tt.played}"></td>
-                        <td th:text="${tt.wins}"></td>
-                        <td th:text="${tt.pf} + ':' + ${tt.pa}"></td>
-                        <td th:text="${tt.diff}"></td>
-                    </tr>
-                </table>
-                <div style="margin-top:8px;">
-                    <div th:each="tm : ${g.matches}" th:replace="~{tournaments/fragments :: tmatch(${tm}, ${tournament.id})}"></div>
-                </div>
-            </div>
-
-            <div class="sect" th:if="${!#lists.isEmpty(rounds)}">
-                <h3>Ždrijeb</h3>
-                <div th:each="r : ${rounds}">
-                    <div class="round-title" th:text="${r.title}">Runda</div>
-                    <div th:each="tm : ${r.matches}" th:replace="~{tournaments/fragments :: tmatch(${tm}, ${tournament.id})}"></div>
-                </div>
-            </div>
-            <p th:if="${#lists.isEmpty(rounds)}" class="muted" style="margin-top:16px;">
-                Ždrijeb se generira kad se odigraju sve utakmice po grupama.
-            </p>
-        </div>
-
-        <!-- AMERICAN -->
-        <div th:case="'AMERICAN'">
-            <div class="sect">
-                <h3>Poredak</h3>
-                <table>
-                    <tr><th>#</th><th>Igrač</th><th>Odigrano</th><th>Pobjede</th><th>Bodovi</th></tr>
-                    <tr th:each="st, s : ${americanStandings}">
-                        <td th:text="${s.count}">1</td>
-                        <td th:text="${st.name}"></td>
-                        <td th:text="${st.played}"></td>
-                        <td th:text="${st.wins}"></td>
-                        <td th:text="${st.pf}"></td>
-                    </tr>
-                </table>
-            </div>
-            <div class="sect" th:each="r : ${americanRounds}">
-                <div class="round-title" th:text="${r.title}">Runda</div>
-                <div th:each="tm : ${r.matches}" th:replace="~{tournaments/fragments :: tmatch(${tm}, ${tournament.id})}"></div>
-            </div>
-        </div>
-
+    <div class="hintbox">
+        Klikni <b>„Upiši rezultat”</b> pored para da uneseš bodove (npr. <b>1034 : 894</b>).
+        Kad se odigraju sve utakmice po grupama, ždrijeb se generira automatski (1. i 2. iz svake grupe).
     </div>
+
+    <!-- ===== GRUPE ===== -->
+    <div class="sect" th:each="g : ${groups}">
+        <h3 th:text="${g.title}">Grupa</h3>
+        <table>
+            <tr><th>#</th><th>Tim</th><th>Odig.</th><th>Pob.</th><th>Bodovi +/-</th><th>Razlika</th></tr>
+            <tr th:each="tt, s : ${g.standings}">
+                <td th:text="${s.count}">1</td>
+                <td th:text="${tt.label}"></td>
+                <td th:text="${tt.played}"></td>
+                <td th:text="${tt.wins}"></td>
+                <td th:text="${tt.pf} + ':' + ${tt.pa}"></td>
+                <td th:text="${tt.diff}"></td>
+            </tr>
+        </table>
+
+        <div class="sched-title">Raspored — tko igra s kim</div>
+        <div th:each="tm : ${g.matches}">
+            <div th:replace="~{tournaments/fragments :: tmatch(${tm}, ${tournament.id})}"></div>
+        </div>
+    </div>
+
+    <!-- ===== ŽDRIJEB ===== -->
+    <div class="sect" th:if="${!#lists.isEmpty(rounds)}">
+        <h3>Ždrijeb (eliminacije)</h3>
+        <div th:each="r : ${rounds}">
+            <div class="round-title" th:text="${r.title}">Runda</div>
+            <div th:each="tm : ${r.matches}">
+                <div th:replace="~{tournaments/fragments :: tmatch(${tm}, ${tournament.id})}"></div>
+            </div>
+        </div>
+    </div>
+    <p th:if="${#lists.isEmpty(rounds)}" style="margin-top:16px;color:#777;">
+        Ždrijeb se prikazuje kad se odigraju sve utakmice po grupama.
+    </p>
 
     <a class="btn btn-outline" style="margin-top:24px;" href="/tournaments">← Svi turniri</a>
 </div>
