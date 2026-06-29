@@ -2,8 +2,58 @@
 <html lang="hr" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Statistika</title>
+    <title>Statistika – Bela Tracker</title>
     <link rel="stylesheet" th:href="@{/style.css}"/>
+    <style>
+        /* ── Tab navigacija ── */
+        .tabs { display:flex; gap:6px; margin-bottom:28px; flex-wrap:wrap; }
+        .tab-btn {
+            padding:10px 22px; border-radius:8px; border:1px solid #2d5a2d;
+            background:transparent; color:#cccccc; cursor:pointer; font-size:14px;
+            transition:.15s;
+        }
+        .tab-btn:hover, .tab-btn.active { background:#4caf50; color:#fff; border-color:#4caf50; }
+
+        /* ── Tab sadržaj ── */
+        .tab-panel { display:none; }
+        .tab-panel.active { display:block; }
+
+        /* ── Stat kartice (summary row) ── */
+        .stat-cards { display:flex; gap:14px; flex-wrap:wrap; margin-bottom:24px; }
+        .stat-card {
+            background:#0f1f0f; border:1px solid #2d5a2d; border-radius:10px;
+            padding:18px 22px; flex:1; min-width:140px;
+        }
+        .stat-card .sc-label { font-size:12px; color:#888; margin-bottom:4px; }
+        .stat-card .sc-value { font-size:26px; font-weight:700; color:#4caf50; }
+        .stat-card .sc-sub { font-size:12px; color:#666; margin-top:2px; }
+
+        /* ── Streak badge ── */
+        .streak-win  { color:#4caf50; font-weight:600; }
+        .streak-loss { color:#f44336; font-weight:600; }
+
+        /* ── Progress bar za win% ── */
+        .bar-wrap { background:#1e3a1e; border-radius:4px; height:7px; width:100px; display:inline-block; vertical-align:middle; margin-left:8px; }
+        .bar-fill { background:#4caf50; border-radius:4px; height:7px; }
+
+        /* ── H2H tablica ── */
+        .h2h-score { font-size:18px; font-weight:700; color:#4caf50; text-align:center; }
+
+        /* ── Forma za dodavanje igrača (inline modal look) ── */
+        .add-player-box {
+            background:#0f1f0f; border:1px solid #4caf50; border-radius:12px;
+            padding:24px; max-width:460px; margin-bottom:28px;
+        }
+        .add-player-box h3 { color:#4caf50; margin-bottom:18px; }
+
+        /* ── Rank badge ── */
+        .rank-1 { color:#FFD700; font-weight:700; font-size:18px; }
+        .rank-2 { color:#C0C0C0; font-weight:700; }
+        .rank-3 { color:#CD7F32; font-weight:700; }
+
+        table { width:100%; }
+        .container { max-width:1100px; }
+    </style>
 </head>
 <body>
 
@@ -18,33 +68,267 @@
     </div>
 </nav>
 
-<div class="container">
-    <h2>Rang lista</h2>
+<div class="container" style="align-items:flex-start;">
 
-    <table>
-        <tr>
-            <th>#</th>
-            <th>Igrač</th>
-            <th>Pobjede</th>
-            <th>Porazi</th>
-            <th>Odigrano</th>
-            <th>% pobjeda</th>
-            <th>Turniri</th>
-        </tr>
-        <tr th:each="p, stat : ${players}">
-            <td th:text="${stat.count}">1</td>
-            <td th:text="${p.name + (p.nickname != null and !p.nickname.isEmpty() ? ' (' + p.nickname + ')' : '')}"></td>
-            <td th:text="${p.wins}"></td>
-            <td th:text="${p.losses}"></td>
-            <td th:text="${p.wins + p.losses}"></td>
-            <td th:text="${(p.wins + p.losses) == 0 ? '—' : #numbers.formatDecimal(p.wins * 100.0 / (p.wins + p.losses), 1, 0) + '%'}"></td>
-            <td th:text="${p.tournamentWins}"></td>
-        </tr>
-        <tr th:if="${#lists.isEmpty(players)}">
-            <td colspan="7" style="text-align:center;color:#888;">Još nema odigranih partija.</td>
-        </tr>
-    </table>
-</div>
+    <div class="page-head" style="width:100%">
+        <h2>📊 Statistika</h2>
+    </div>
+
+    <!-- ── TABOVI ── -->
+    <div class="tabs">
+        <button class="tab-btn" data-tab="igraci" onclick="switchTab('igraci')">🏅 Igrači</button>
+        <button class="tab-btn" data-tab="parovi" onclick="switchTab('parovi')">🤝 Parovi</button>
+        <button class="tab-btn" data-tab="h2h"    onclick="switchTab('h2h')">⚔️ Head-to-Head</button>
+        <button class="tab-btn" data-tab="dodaj"  onclick="switchTab('dodaj')">➕ Dodaj igrača</button>
+    </div>
+
+    <!-- ════════════════════════════════════════════
+         TAB 1 — IGRAČI (rang lista + detalji)
+    ════════════════════════════════════════════ -->
+    <div id="tab-igraci" class="tab-panel" style="width:100%">
+
+        <div th:if="${#lists.isEmpty(players)}" style="color:#888;text-align:center;padding:40px;">
+            Još nema odigranih partija.
+        </div>
+
+        <div th:unless="${#lists.isEmpty(players)}">
+            <!-- summary kartice -->
+            <div class="stat-cards">
+                <div class="stat-card">
+                    <div class="sc-label">Ukupno igrača</div>
+                    <div class="sc-value" th:text="${#lists.size(players)}">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="sc-label">Prvak (win%)</div>
+                    <div class="sc-value" th:text="${players[0].name}">—</div>
+                    <div class="sc-sub" th:text="${players[0].winPctStr}"></div>
+                </div>
+                <div class="stat-card">
+                    <div class="sc-label">Najviše pobjeda</div>
+                    <div class="sc-value" th:text="${players[0].wins}">0</div>
+                    <div class="sc-sub" th:text="${players[0].name}"></div>
+                </div>
+            </div>
+
+            <table>
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Igrač</th>
+                    <th>Pobjede</th>
+                    <th>Porazi</th>
+                    <th>Odigrano</th>
+                    <th>Win %</th>
+                    <th>Bod. za</th>
+                    <th>Bod. protiv</th>
+                    <th>Prosjek/partiji</th>
+                    <th>Niz</th>
+                    <th>Best niz</th>
+                    <th>Turniri</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="p, stat : ${players}">
+                    <td>
+                        <span th:if="${stat.index == 0}" class="rank-1">🥇</span>
+                        <span th:if="${stat.index == 1}" class="rank-2">🥈</span>
+                        <span th:if="${stat.index == 2}" class="rank-3">🥉</span>
+                        <span th:if="${stat.index >= 3}" th:text="${stat.count}"></span>
+                    </td>
+                    <td>
+                        <span th:text="${p.name}"></span>
+                        <span th:if="${p.nickname != null and !p.nickname.isEmpty()}"
+                              style="color:#888;font-size:12px;"
+                              th:text="'(' + ${p.nickname} + ')'"></span>
+                    </td>
+                    <td th:text="${p.wins}" style="color:#4caf50;font-weight:600;"></td>
+                    <td th:text="${p.losses}" style="color:#f44336;"></td>
+                    <td th:text="${p.played}"></td>
+                    <td>
+                        <span th:text="${p.winPctStr}"></span>
+                        <span th:if="${p.played > 0}" class="bar-wrap">
+                            <span class="bar-fill"
+                                  th:style="'width:' + ${p.winPct} + 'px;max-width:100px;'"></span>
+                        </span>
+                    </td>
+                    <td th:text="${p.totalPointsFor}"></td>
+                    <td th:text="${p.totalPointsAgainst}"></td>
+                    <td th:text="${p.played == 0 ? '—' : #numbers.formatDecimal(p.avgPointsPerMatch, 1, 1)}"></td>
+                    <td>
+                        <span th:if="${p.currentStreak > 0}" class="streak-win"
+                              th:text="${p.currentStreakLabel}"></span>
+                        <span th:if="${p.currentStreak < 0}" class="streak-loss"
+                              th:text="${p.currentStreakLabel}"></span>
+                        <span th:if="${p.currentStreak == 0}" style="color:#666;">—</span>
+                    </td>
+                    <td th:text="${p.longestWinStreak > 0 ? p.longestWinStreak + 'P' : '—'}"></td>
+                    <td th:text="${p.tournamentWins > 0 ? p.tournamentWins : '—'}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div><!-- /tab-igraci -->
+
+    <!-- ════════════════════════════════════════════
+         TAB 2 — PAROVI
+    ════════════════════════════════════════════ -->
+    <div id="tab-parovi" class="tab-panel" style="width:100%">
+
+        <div th:if="${#lists.isEmpty(pairs)}" style="color:#888;text-align:center;padding:40px;">
+            Još nema završenih partija.
+        </div>
+
+        <div th:unless="${#lists.isEmpty(pairs)}">
+            <!-- top par kartica -->
+            <div class="stat-cards" th:if="${!#lists.isEmpty(pairs)}">
+                <div class="stat-card">
+                    <div class="sc-label">🏆 Najbolji par</div>
+                    <div class="sc-value" style="font-size:16px;"
+                         th:text="${pairs[0].player1Name + ' & ' + pairs[0].player2Name}">—</div>
+                    <div class="sc-sub" th:text="${pairs[0].winPctStr + ' (' + pairs[0].wins + 'P / ' + pairs[0].played + 'O)'}"></div>
+                </div>
+                <div class="stat-card">
+                    <div class="sc-label">Ukupno parova</div>
+                    <div class="sc-value" th:text="${#lists.size(pairs)}">0</div>
+                </div>
+            </div>
+
+            <table>
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Par</th>
+                    <th>Pobjede</th>
+                    <th>Porazi</th>
+                    <th>Odigrano</th>
+                    <th>Win %</th>
+                    <th>Bod. za</th>
+                    <th>Bod. protiv</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="ps, stat : ${pairs}">
+                    <td>
+                        <span th:if="${stat.index == 0}" class="rank-1">🥇</span>
+                        <span th:if="${stat.index == 1}" class="rank-2">🥈</span>
+                        <span th:if="${stat.index == 2}" class="rank-3">🥉</span>
+                        <span th:if="${stat.index >= 3}" th:text="${stat.count}"></span>
+                    </td>
+                    <td>
+                        <strong th:text="${ps.player1Name}"></strong>
+                        <span style="color:#888;"> &amp; </span>
+                        <strong th:text="${ps.player2Name}"></strong>
+                    </td>
+                    <td th:text="${ps.wins}" style="color:#4caf50;font-weight:600;"></td>
+                    <td th:text="${ps.losses}" style="color:#f44336;"></td>
+                    <td th:text="${ps.played}"></td>
+                    <td>
+                        <span th:text="${ps.winPctStr}"></span>
+                        <span th:if="${ps.played > 0}" class="bar-wrap">
+                            <span class="bar-fill"
+                                  th:style="'width:' + ${ps.winPct} + 'px;max-width:100px;'"></span>
+                        </span>
+                    </td>
+                    <td th:text="${ps.totalPointsFor}"></td>
+                    <td th:text="${ps.totalPointsAgainst}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div><!-- /tab-parovi -->
+
+    <!-- ════════════════════════════════════════════
+         TAB 3 — HEAD-TO-HEAD
+    ════════════════════════════════════════════ -->
+    <div id="tab-h2h" class="tab-panel" style="width:100%">
+
+        <div th:if="${#lists.isEmpty(h2h)}" style="color:#888;text-align:center;padding:40px;">
+            Nema dovoljno međusobnih dvoboja (potrebno min. 2 zajednička meča).
+        </div>
+
+        <div th:unless="${#lists.isEmpty(h2h)}">
+            <table>
+                <thead>
+                <tr>
+                    <th>Par A</th>
+                    <th style="text-align:center;">Rezultat</th>
+                    <th>Par B</th>
+                    <th style="text-align:center;">Odigrano</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="h : ${h2h}">
+                    <td>
+                        <span th:text="${h.pairA}"
+                              th:style="${h.winsA > h.winsB} ? 'color:#4caf50;font-weight:600;' : ''"></span>
+                    </td>
+                    <td class="h2h-score">
+                        <span th:text="${h.winsA}"
+                              th:style="${h.winsA > h.winsB} ? 'color:#4caf50;' : 'color:#f44336;'"></span>
+                        <span style="color:#555;"> – </span>
+                        <span th:text="${h.winsB}"
+                              th:style="${h.winsB > h.winsA} ? 'color:#4caf50;' : 'color:#f44336;'"></span>
+                    </td>
+                    <td>
+                        <span th:text="${h.pairB}"
+                              th:style="${h.winsB > h.winsA} ? 'color:#4caf50;font-weight:600;' : ''"></span>
+                    </td>
+                    <td style="text-align:center;color:#888;" th:text="${h.played}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div><!-- /tab-h2h -->
+
+    <!-- ════════════════════════════════════════════
+         TAB 4 — DODAJ IGRAČA
+    ════════════════════════════════════════════ -->
+    <div id="tab-dodaj" class="tab-panel" style="width:100%">
+        <div class="add-player-box">
+            <h3>➕ Novi igrač</h3>
+            <form method="post" th:action="@{/statistics/add-player}" th:object="${newPlayer}">
+                <div class="form-group">
+                    <label>Ime: *</label>
+                    <input type="text" th:field="*{name}" placeholder="Ime igrača"/>
+                    <span class="error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></span>
+                </div>
+                <div class="form-group">
+                    <label>Nadimak:</label>
+                    <input type="text" th:field="*{nickname}" placeholder="Opcionalno"/>
+                </div>
+                <button type="submit" class="btn">Dodaj igrača</button>
+                <a href="/players" class="btn btn-outline" style="margin-left:10px;">Upravljaj igračima →</a>
+            </form>
+        </div>
+
+        <p style="color:#666;font-size:13px;">
+            Za uređivanje ili brisanje igrača koristi
+            <a href="/players" style="color:#4caf50;">stranicu Igrači</a>.
+        </p>
+    </div><!-- /tab-dodaj -->
+
+</div><!-- /container -->
+
+<script>
+    function switchTab(name) {
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('tab-' + name).classList.add('active');
+        document.querySelector('[data-tab="' + name + '"]').classList.add('active');
+        // update URL bez reloada
+        const url = new URL(window.location);
+        url.searchParams.set('tab', name);
+        history.replaceState(null, '', url);
+    }
+
+    // otvori tab iz URL parametra (ili defaultni)
+    (function() {
+        const params = new URLSearchParams(window.location.search);
+        const tab = params.get('tab') || 'igraci';
+        const valid = ['igraci', 'parovi', 'h2h', 'dodaj'];
+        switchTab(valid.includes(tab) ? tab : 'igraci');
+    })();
+</script>
 
 </body>
 </html>
