@@ -16,30 +16,17 @@ public class TournamentService {
     private final TournamentTeamRepository teamRepo;
     private final TournamentMatchRepository tmRepo;
     private final PlayerRepository playerRepo;
-    private final MatchService matchService;
 
     public TournamentService(TournamentRepository tournamentRepo,
                              TournamentTeamRepository teamRepo,
                              TournamentMatchRepository tmRepo,
-                             PlayerRepository playerRepo,
-                             MatchService matchService) {
+                             PlayerRepository playerRepo) {
         this.tournamentRepo = tournamentRepo;
         this.teamRepo = teamRepo;
         this.tmRepo = tmRepo;
         this.playerRepo = playerRepo;
-        this.matchService = matchService;
     }
 
-    public static class Standing {
-        public String name; public int played, wins, pf, pa;
-        public Standing(String n){ this.name = n; }
-        public String getName(){ return name; }
-        public int getPlayed(){ return played; }
-        public int getWins(){ return wins; }
-        public int getPf(){ return pf; }
-        public int getPa(){ return pa; }
-        public int getDiff(){ return pf - pa; }
-    }
     public record RoundView(int roundNo, String title, List<TournamentMatch> matches) {
         public int getRoundNo(){ return roundNo; }
         public String getTitle(){ return title; }
@@ -63,7 +50,6 @@ public class TournamentService {
     public List<TournamentTeam> teams(Long tid) {
         return teamRepo.findByTournamentIdOrderByIdAsc(tid);
     }
-
     public TournamentMatch getTournamentMatch(Long tmId) {
         return tmRepo.findById(tmId)
                 .orElseThrow(() -> new RuntimeException("Meč nije pronađen, id: " + tmId));
@@ -73,16 +59,8 @@ public class TournamentService {
     public Tournament create(String name, TournamentFormat format, int target, List<Long> playerIds) {
         List<Player> players = new ArrayList<>(playerRepo.findAllById(playerIds));
         int n = players.size();
-
-        if (format == TournamentFormat.AMERICAN) {
-            if (n < 4 || n % 4 != 0)
-                throw new IllegalArgumentException("Američki format treba broj igrača djeljiv s 4 (4, 8, 12...).");
-        } else {
-            if (n < 4 || n % 2 != 0)
-                throw new IllegalArgumentException("Treba paran broj igrača (najmanje 4).");
-            if (format == TournamentFormat.GROUPS_KNOCKOUT && n < 8)
-                throw new IllegalArgumentException("Grupe + ždrijeb traže najmanje 8 igrača (4 tima).");
-        }
+        if (n < 8 || n % 2 != 0)
+            throw new IllegalArgumentException("Grupe + ždrijeb traže paran broj igrača, najmanje 8 (4 tima).");
 
         Collections.shuffle(players);
 
@@ -94,74 +72,23 @@ public class TournamentService {
         t.setStatus("IN_PROGRESS");
         t = tournamentRepo.save(t);
 
-        switch (format) {
-            case KNOCKOUT -> {
-                List<TournamentTeam> teams = pairTeams(t, players, -1);
-                buildKnockout(t, "KO", teams);
-            }
-            case LEAGUE -> {
-                List<TournamentTeam> teams = pairTeams(t, players, -1);
-                buildLeague(t, teams);
-            }
-            case GROUPS_KNOCKOUT -> {
-                List<TournamentTeam> teams = pairTeams(t, players, -1);
-                int g = Math.max(2, (int) Math.round(teams.size() / 4.0));
-                buildGroupStage(t, teams, g);
-            }
-            case AMERICAN -> buildAmerican(t, players);
-        }
+        List<TournamentTeam> teams = pairTeams(t, players);
+        int g = Math.max(2, (int) Math.round(teams.size() / 4.0));
+        buildGroupStage(t, teams, g);
         return t;
     }
 
-    private List<TournamentTeam> pairTeams(Tournament t, List<Player> players, int group) {
+    private List<TournamentTeam> pairTeams(Tournament t, List<Player> players) {
         List<TournamentTeam> teams = new ArrayList<>();
         for (int i = 0; i + 1 < players.size(); i += 2) {
             TournamentTeam tt = new TournamentTeam();
             tt.setTournament(t);
             tt.setPlayer1(players.get(i));
             tt.setPlayer2(players.get(i + 1));
-            tt.setGroupNo(group);
+            tt.setGroupNo(-1);
             teams.add(teamRepo.save(tt));
         }
         return teams;
-    }
-
-    private void buildKnockout(Tournament t, String phase, List<TournamentTeam> seeds) {
-        int n = seeds.size();
-        int bracket = 1; while (bracket < n) bracket *= 2;
-        int rounds = 0; { int p = 1; while (p < bracket) { p *= 2; rounds++; } }
-
-        List<TournamentMatch> all = new ArrayList<>();
-        for (int r = 1; r <= rounds; r++) {
-            int cnt = bracket >> r;
-            for (int s = 0; s < cnt; s++) {
-                TournamentMatch m = new TournamentMatch();
-                m.setTournament(t); m.setPhase(phase); m.setRoundNo(r); m.setSlot(s);
-                all.add(m);
-            }
-        }
-        int byes = bracket - n;
-        List<TournamentMatch> r1 = all.stream()
-                .filter(m -> m.getRoundNo() == 1)
-                .sorted(Comparator.comparingInt(TournamentMatch::getSlot)).toList();
-        int idx = 0;
-        for (int s = 0; s < r1.size(); s++) {
-            TournamentMatch m = r1.get(s);
-            if (s < byes) { m.setTeamA(seeds.get(idx++)); m.setBye(true); m.setWinnerSide(1); }
-            else { m.setTeamA(seeds.get(idx++)); m.setTeamB(seeds.get(idx++)); }
-        }
-        tmRepo.saveAll(all);
-    }
-
-    private void buildLeague(Tournament t, List<TournamentTeam> teams) {
-        int round = 1;
-        for (int i = 0; i < teams.size(); i++)
-            for (int j = i + 1; j < teams.size(); j++) {
-                TournamentMatch m = new TournamentMatch();
-                m.setTournament(t); m.setPhase("LEAGUE"); m.setRoundNo(round); m.setSlot(0);
-                m.setTeamA(teams.get(i)); m.setTeamB(teams.get(j));
-                tmRepo.save(m); round++;
-            }
     }
 
     private void buildGroupStage(Tournament t, List<TournamentTeam> teams, int groups) {
@@ -184,46 +111,31 @@ public class TournamentService {
         }
     }
 
-    private void buildAmerican(Tournament t, List<Player> players) {
-        int rounds = Math.max(2, players.size() / 2);
+    private void buildKnockout(Tournament t, List<TournamentTeam> seeds) {
+        int n = seeds.size();
+        int bracket = 1; while (bracket < n) bracket *= 2;
+        int rounds = 0; { int p = 1; while (p < bracket) { p *= 2; rounds++; } }
+
+        List<TournamentMatch> all = new ArrayList<>();
         for (int r = 1; r <= rounds; r++) {
-            List<Player> shuffled = new ArrayList<>(players);
-            Collections.shuffle(shuffled);
-            int table = 0;
-            for (int i = 0; i + 3 < shuffled.size(); i += 4) {
+            int cnt = bracket >> r;
+            for (int s = 0; s < cnt; s++) {
                 TournamentMatch m = new TournamentMatch();
-                m.setTournament(t); m.setPhase("AMERICAN"); m.setRoundNo(r); m.setSlot(table++);
-                m.setA1(shuffled.get(i));   m.setA2(shuffled.get(i + 1));
-                m.setB1(shuffled.get(i + 2)); m.setB2(shuffled.get(i + 3));
-                tmRepo.save(m);
+                m.setTournament(t); m.setPhase("KO"); m.setRoundNo(r); m.setSlot(s);
+                all.add(m);
             }
         }
-    }
-    @Transactional
-    public Long playMatch(Long tmId) {
-        TournamentMatch tm = tmRepo.findById(tmId)
-                .orElseThrow(() -> new RuntimeException("Meč nije pronađen."));
-        if (tm.getMatch() != null) return tm.getMatch().getId();
-        if (!tm.isReady()) throw new IllegalStateException("Meč još nije spreman za igru.");
-
-        Player a1, a2, b1, b2;
-        if (tm.getTeamA() != null) {
-            a1 = tm.getTeamA().getPlayer1(); a2 = tm.getTeamA().getPlayer2();
-            b1 = tm.getTeamB().getPlayer1(); b2 = tm.getTeamB().getPlayer2();
-        } else {
-            a1 = tm.getA1(); a2 = tm.getA2(); b1 = tm.getB1(); b2 = tm.getB2();
+        int byes = bracket - n;
+        List<TournamentMatch> r1 = all.stream()
+                .filter(m -> m.getRoundNo() == 1)
+                .sorted(Comparator.comparingInt(TournamentMatch::getSlot)).toList();
+        int idx = 0;
+        for (int s = 0; s < r1.size(); s++) {
+            TournamentMatch m = r1.get(s);
+            if (s < byes) { m.setTeamA(seeds.get(idx++)); m.setBye(true); m.setWinnerSide(1); }
+            else { m.setTeamA(seeds.get(idx++)); m.setTeamB(seeds.get(idx++)); }
         }
-
-        Match m = new Match();
-        m.setTargetScore(tm.getTournament().getTargetScore());
-        m.setTeam1Player1(a1); m.setTeam1Player2(a2);
-        m.setTeam2Player1(b1); m.setTeam2Player2(b2);
-        m.setDealer(a1 != null ? a1.getName() : null);
-        Match saved = matchService.saveMatch(m);
-
-        tm.setMatch(saved);
-        tmRepo.save(tm);
-        return saved.getId();
+        tmRepo.saveAll(all);
     }
 
     @Transactional
@@ -239,7 +151,6 @@ public class TournamentService {
         tm.setWinnerSide(scoreA > scoreB ? 1 : 2);
         tmRepo.save(tm);
     }
-
     @Transactional
     public void sync(Long tid) {
         Tournament t = get(tid);
@@ -252,12 +163,10 @@ public class TournamentService {
             }
         }
 
-        if (t.getFormat() == TournamentFormat.GROUPS_KNOCKOUT) {
-            List<TournamentMatch> ko = tmRepo.findByTournamentIdAndPhaseOrderByRoundNoAscSlotAsc(tid, "KO");
-            List<TournamentMatch> grp = tmRepo.findByTournamentIdAndPhaseOrderByRoundNoAscSlotAsc(tid, "GROUP");
-            boolean allGroupDone = !grp.isEmpty() && grp.stream().allMatch(TournamentMatch::isDecided);
-            if (ko.isEmpty() && allGroupDone) generateKnockoutFromGroups(t);
-        }
+        List<TournamentMatch> ko = tmRepo.findByTournamentIdAndPhaseOrderByRoundNoAscSlotAsc(tid, "KO");
+        List<TournamentMatch> grp = tmRepo.findByTournamentIdAndPhaseOrderByRoundNoAscSlotAsc(tid, "GROUP");
+        boolean allGroupDone = !grp.isEmpty() && grp.stream().allMatch(TournamentMatch::isDecided);
+        if (ko.isEmpty() && allGroupDone) generateKnockoutFromGroups(t);
 
         advanceKnockout(t);
         checkFinished(t);
@@ -300,41 +209,17 @@ public class TournamentService {
             seeds.add(winners.get(i));
             seeds.add(runners.get((i + 1) % g));
         }
-        buildKnockout(t, "KO", seeds);
+        buildKnockout(t, seeds);
     }
 
     private void checkFinished(Tournament t) {
-        switch (t.getFormat()) {
-            case KNOCKOUT, GROUPS_KNOCKOUT -> {
-                List<TournamentMatch> ko = tmRepo.findByTournamentIdAndPhaseOrderByRoundNoAscSlotAsc(t.getId(), "KO");
-                if (ko.isEmpty()) return;
-                int maxRound = ko.stream().mapToInt(TournamentMatch::getRoundNo).max().orElse(0);
-                TournamentMatch fin = ko.stream().filter(m -> m.getRoundNo() == maxRound).findFirst().orElse(null);
-                if (fin != null && fin.isDecided()) {
-                    TournamentTeam champ = fin.getWinnerSide() == 1 ? fin.getTeamA() : fin.getTeamB();
-                    if (champ != null) finish(t, champ.getLabel(), List.of(champ.getPlayer1(), champ.getPlayer2()));
-                }
-            }
-            case LEAGUE -> {
-                List<TournamentMatch> ms = tmRepo.findByTournamentIdAndPhaseOrderByRoundNoAscSlotAsc(t.getId(), "LEAGUE");
-                if (!ms.isEmpty() && ms.stream().allMatch(TournamentMatch::isDecided)) {
-                    List<TournamentTeam> table = buildLeagueStandings(t.getId());
-                    TournamentTeam champ = table.get(0);
-                    finish(t, champ.getLabel(), List.of(champ.getPlayer1(), champ.getPlayer2()));
-                }
-            }
-            case AMERICAN -> {
-                List<TournamentMatch> ms = tmRepo.findByTournamentIdAndPhaseOrderByRoundNoAscSlotAsc(t.getId(), "AMERICAN");
-                if (!ms.isEmpty() && ms.stream().allMatch(TournamentMatch::isDecided)) {
-                    List<Standing> st = americanStandings(t.getId());
-                    if (!st.isEmpty()) {
-                        Standing top = st.get(0);
-                        Player champP = playerRepo.findAll().stream()
-                                .filter(p -> p.getName().equals(top.name)).findFirst().orElse(null);
-                        finish(t, top.name, champP != null ? List.of(champP) : List.of());
-                    }
-                }
-            }
+        List<TournamentMatch> ko = tmRepo.findByTournamentIdAndPhaseOrderByRoundNoAscSlotAsc(t.getId(), "KO");
+        if (ko.isEmpty()) return;
+        int maxRound = ko.stream().mapToInt(TournamentMatch::getRoundNo).max().orElse(0);
+        TournamentMatch fin = ko.stream().filter(m -> m.getRoundNo() == maxRound).findFirst().orElse(null);
+        if (fin != null && fin.isDecided()) {
+            TournamentTeam champ = fin.getWinnerSide() == 1 ? fin.getTeamA() : fin.getTeamB();
+            if (champ != null) finish(t, champ.getLabel(), List.of(champ.getPlayer1(), champ.getPlayer2()));
         }
     }
 
@@ -375,20 +260,6 @@ public class TournamentService {
     }
 
     @Transactional(readOnly = true)
-    public List<TournamentTeam> buildLeagueStandings(Long tid) {
-        List<TournamentTeam> teams = teams(tid);
-        List<TournamentMatch> ms = tmRepo.findByTournamentIdAndPhaseOrderByRoundNoAscSlotAsc(tid, "LEAGUE");
-        computeTeamStats(teams, ms);
-        teams.sort(standingOrder());
-        return teams;
-    }
-
-    @Transactional(readOnly = true)
-    public List<TournamentMatch> leagueMatches(Long tid) {
-        return tmRepo.findByTournamentIdAndPhaseOrderByRoundNoAscSlotAsc(tid, "LEAGUE");
-    }
-
-    @Transactional(readOnly = true)
     public List<GroupView> buildGroups(Long tid) {
         List<TournamentTeam> teams = teams(tid);
         List<TournamentMatch> ms = tmRepo.findByTournamentIdAndPhaseOrderByRoundNoAscSlotAsc(tid, "GROUP");
@@ -425,50 +296,6 @@ public class TournamentService {
             case 8 -> "Osmina finala";
             default -> matchesInRound + " mečeva";
         };
-    }
-
-    @Transactional(readOnly = true)
-    public List<RoundView> americanRounds(Long tid) {
-        List<TournamentMatch> ms = tmRepo.findByTournamentIdAndPhaseOrderByRoundNoAscSlotAsc(tid, "AMERICAN");
-        Map<Integer, List<TournamentMatch>> byRound = new TreeMap<>();
-        for (TournamentMatch m : ms) byRound.computeIfAbsent(m.getRoundNo(), k -> new ArrayList<>()).add(m);
-        List<RoundView> out = new ArrayList<>();
-        for (Map.Entry<Integer, List<TournamentMatch>> e : byRound.entrySet())
-            out.add(new RoundView(e.getKey(), "Runda " + e.getKey(), e.getValue()));
-        return out;
-    }
-
-    @Transactional(readOnly = true)
-    public List<Standing> americanStandings(Long tid) {
-        List<TournamentMatch> ms = tmRepo.findByTournamentIdAndPhaseOrderByRoundNoAscSlotAsc(tid, "AMERICAN");
-        Map<Long, Standing> map = new LinkedHashMap<>();
-        for (TournamentMatch m : ms) {
-            register(map, m.getA1()); register(map, m.getA2());
-            register(map, m.getB1()); register(map, m.getB2());
-        }
-        for (TournamentMatch m : ms) {
-            if (m.getMatch() == null || !m.getMatch().isFinished()) continue;
-            int sa = m.getMatch().getTeam1Total();
-            int sb = m.getMatch().getTeam2Total();
-            boolean aWon = m.getWinnerSide() == 1;
-            acc(map, m.getA1(), sa, sb, aWon); acc(map, m.getA2(), sa, sb, aWon);
-            acc(map, m.getB1(), sb, sa, !aWon); acc(map, m.getB2(), sb, sa, !aWon);
-        }
-        List<Standing> list = new ArrayList<>(map.values());
-        list.sort(
-                Comparator.comparingInt((Standing s) -> s.pf).reversed()
-                        .thenComparing(Comparator.comparingInt((Standing s) -> s.wins).reversed())
-        );
-        return list;
-    }
-
-    private void register(Map<Long, Standing> map, Player p) {
-        if (p != null) map.computeIfAbsent(p.getId(), k -> new Standing(p.getName()));
-    }
-    private void acc(Map<Long, Standing> map, Player p, int forPts, int againstPts, boolean won) {
-        if (p == null) return;
-        Standing s = map.get(p.getId());
-        s.played++; s.pf += forPts; s.pa += againstPts; if (won) s.wins++;
     }
 
     @Transactional

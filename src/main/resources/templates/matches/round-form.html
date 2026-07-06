@@ -81,7 +81,7 @@
             <input type="hidden" th:field="*{team1Score}"/>
             <input type="hidden" th:field="*{team2Score}"/>
 
-            <!-- BODOVI -->
+
             <div class="block-title">Bodovi (zbroj = 162)</div>
             <div class="score-row">
                 <div class="score-col mi">
@@ -98,14 +98,13 @@
             </div>
             <div class="hint">Upišeš jednu stranu — druga se sama dopuni do 162.</div>
 
-            <!-- TKO JE ZVAO -->
+
             <div class="block-title">Tko je zvao</div>
             <div class="caller-row">
                 <label class="pill mi"><input type="radio" th:field="*{caller}" value="1"/><span>MI</span></label>
                 <label class="pill vi"><input type="radio" th:field="*{caller}" value="2"/><span>VI</span></label>
             </div>
 
-            <!-- ZVANJA -->
             <div class="block-title">Zvanja</div>
             <div class="decl-grid">
                 <div class="decl mi">
@@ -134,7 +133,7 @@
                 </div>
             </div>
 
-            <!-- ŠTIGLJA -->
+
             <div class="block-title">Štiglja (svi štihovi, +90)</div>
             <div class="stiglja-row">
                 <button type="button" data-s="0" class="active">Nema</button>
@@ -142,7 +141,7 @@
                 <button type="button" data-s="2">VI sve</button>
             </div>
 
-            <!-- PREGLED -->
+
             <div class="preview">
                 <div class="pv-score"><span id="pvMi">0</span> : <span id="pvVi">0</span></div>
                 <div class="pv-note" id="pvNote"></div>
@@ -198,7 +197,7 @@
         var caller = callerVal();
         var fMi = totalMi, fVi = totalVi, note = '';
 
-        // PAO: zvač mora imati VIŠE od protivnika, inače sve ide protivniku
+
         if (caller === 1 && totalMi <= totalVi) {
             fMi = 0; fVi = totalMi + totalVi; note = 'MI pali — svi bodovi idu VI';
         } else if (caller === 2 && totalVi <= totalMi) {
@@ -262,7 +261,6 @@
         });
     });
 
-    // pri spremanju osiguraj izračun
     document.getElementById('roundForm').addEventListener('submit', compute);
 
     compute();

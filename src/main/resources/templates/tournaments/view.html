@@ -60,8 +60,6 @@
         Klikni <b>„Upiši rezultat”</b> pored para da uneseš bodove (npr. <b>1034 : 894</b>).
         Kad se odigraju sve utakmice po grupama, ždrijeb se generira automatski (1. i 2. iz svake grupe).
     </div>
-
-    <!-- ===== GRUPE ===== -->
     <div class="sect" th:each="g : ${groups}">
         <h3 th:text="${g.title}">Grupa</h3>
         <table>
@@ -82,7 +80,7 @@
         </div>
     </div>
 
-    <!-- ===== ŽDRIJEB ===== -->
+
     <div class="sect" th:if="${!#lists.isEmpty(rounds)}">
         <h3>Ždrijeb (eliminacije)</h3>
         <div th:each="r : ${rounds}">

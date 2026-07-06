@@ -20,7 +20,6 @@ public class StatisticsService {
         this.playerRepository = playerRepository;
     }
 
-    // DTO za statistiku para
     public static class PairStats {
         public String player1Name;
         public String player2Name;
@@ -36,7 +35,6 @@ public class StatisticsService {
         }
     }
 
-    // DTO za head-to-head između dva para
     public static class H2HEntry {
         public String pairA;
         public String pairB;
@@ -45,7 +43,6 @@ public class StatisticsService {
         public int played;
     }
 
-    // DTO za "best scorer" igrač
     public static class PlayerDetailStats {
         public String name;
         public String nickname;
@@ -53,7 +50,7 @@ public class StatisticsService {
         public int losses;
         public int played;
         public double winPct;
-        public int totalPointsFor;    // ukupno bodova koje su njegovi timovi skupili
+        public int totalPointsFor;
         public int totalPointsAgainst;
         public double avgPointsPerMatch;
         public int longestWinStreak;
@@ -137,8 +134,6 @@ public class StatisticsService {
 
             String k1 = pairKey(p1a.getId(), p1b.getId());
             String k2 = pairKey(p2a.getId(), p2b.getId());
-
-            // combined key: always smaller first
             String combined = k1.compareTo(k2) <= 0 ? k1 + "|" + k2 : k2 + "|" + k1;
             boolean flipped = k1.compareTo(k2) > 0;
 
@@ -155,7 +150,7 @@ public class StatisticsService {
             });
 
             e.played++;
-            int winner = m.getWinner(); // 1 = team1, 2 = team2
+            int winner = m.getWinner();
             boolean team1IsA = !flipped;
             if ((winner == 1 && team1IsA) || (winner == 2 && !team1IsA)) e.winsA++;
             else e.winsB++;
@@ -171,7 +166,6 @@ public class StatisticsService {
         List<Player> players = playerRepository.findAllByOrderByWinsDescLossesAsc();
         List<Match> allMatches = matchRepository.findAllByOrderByDateDescIdDesc();
 
-        // sort matches oldest-first for streak calculation
         List<Match> chronological = new ArrayList<>(allMatches);
         Collections.reverse(chronological);
 
