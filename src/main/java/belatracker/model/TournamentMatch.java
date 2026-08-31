@@ -26,11 +26,6 @@ public class TournamentMatch {
     @ManyToOne private TournamentTeam teamA;
     @ManyToOne private TournamentTeam teamB;
 
-    @ManyToOne private Player a1;
-    @ManyToOne private Player a2;
-    @ManyToOne private Player b1;
-    @ManyToOne private Player b2;
-
     @ManyToOne private Match match;
 
     public boolean isDecided() { return winnerSide != 0; }
@@ -60,31 +55,17 @@ public class TournamentMatch {
     public void setTeamA(TournamentTeam t) { this.teamA = t; }
     public TournamentTeam getTeamB() { return teamB; }
     public void setTeamB(TournamentTeam t) { this.teamB = t; }
-    public Player getA1() { return a1; }
-    public void setA1(Player p) { this.a1 = p; }
-    public Player getA2() { return a2; }
-    public void setA2(Player p) { this.a2 = p; }
-    public Player getB1() { return b1; }
-    public void setB1(Player p) { this.b1 = p; }
-    public Player getB2() { return b2; }
-    public void setB2(Player p) { this.b2 = p; }
     public Match getMatch() { return match; }
     public void setMatch(Match m) { this.match = m; }
 
     public String getLabelA() {
-        if (teamA != null) return teamA.getLabel();
-        if (a1 != null || a2 != null) return name(a1) + " / " + name(a2);
-        return "—";
+        return teamA != null ? teamA.getLabel() : "—";
     }
     public String getLabelB() {
-        if (teamB != null) return teamB.getLabel();
-        if (b1 != null || b2 != null) return name(b1) + " / " + name(b2);
-        return "—";
+        return teamB != null ? teamB.getLabel() : "—";
     }
-    private String name(Player p) { return p != null ? p.getName() : "?"; }
 
     public boolean isReady() {
-        if (teamA != null || teamB != null) return teamA != null && teamB != null && !bye;
-        return a1 != null && a2 != null && b1 != null && b2 != null;
+        return teamA != null && teamB != null && !bye;
     }
 }

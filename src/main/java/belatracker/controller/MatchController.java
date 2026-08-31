@@ -2,6 +2,7 @@ package belatracker.controller;
 
 import belatracker.model.Match;
 import belatracker.model.Player;
+import belatracker.repository.TournamentMatchRepository;
 import belatracker.service.MatchService;
 import belatracker.service.PlayerService;
 import org.springframework.stereotype.Controller;
@@ -14,10 +15,13 @@ public class MatchController {
 
     private final MatchService matchService;
     private final PlayerService playerService;
+    private final TournamentMatchRepository tournamentMatchRepository;
 
-    public MatchController(MatchService matchService, PlayerService playerService) {
+    public MatchController(MatchService matchService, PlayerService playerService,
+                           TournamentMatchRepository tournamentMatchRepository) {
         this.matchService = matchService;
         this.playerService = playerService;
+        this.tournamentMatchRepository = tournamentMatchRepository;
     }
 
     @GetMapping
@@ -56,6 +60,7 @@ public class MatchController {
         Match m = matchService.getMatchById(id);
         model.addAttribute("match", m);
         model.addAttribute("back", back != null ? back : "/matches");
+        model.addAttribute("inTournament", tournamentMatchRepository.findByMatchId(id).isPresent());
 
         String[] order = {
                 nameOf(m.getTeam1Player1()),

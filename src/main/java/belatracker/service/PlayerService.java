@@ -4,7 +4,6 @@ import belatracker.model.Match;
 import belatracker.model.Player;
 import belatracker.repository.MatchRepository;
 import belatracker.repository.PlayerRepository;
-import belatracker.repository.TournamentMatchRepository;
 import belatracker.repository.TournamentTeamRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,16 +16,13 @@ public class PlayerService {
     private final PlayerRepository playerRepository;
     private final MatchRepository matchRepository;
     private final TournamentTeamRepository tournamentTeamRepository;
-    private final TournamentMatchRepository tournamentMatchRepository;
 
     public PlayerService(PlayerRepository playerRepository,
                          MatchRepository matchRepository,
-                         TournamentTeamRepository tournamentTeamRepository,
-                         TournamentMatchRepository tournamentMatchRepository) {
+                         TournamentTeamRepository tournamentTeamRepository) {
         this.playerRepository = playerRepository;
         this.matchRepository = matchRepository;
         this.tournamentTeamRepository = tournamentTeamRepository;
-        this.tournamentMatchRepository = tournamentMatchRepository;
     }
 
     public List<Player> getAllPlayers() {
@@ -79,15 +75,6 @@ public class PlayerService {
             }
             if (changed) matchRepository.save(m);
         }
-
-        tournamentMatchRepository.findAll().forEach(tm -> {
-            boolean changed = false;
-            if (tm.getA1() != null && tm.getA1().getId().equals(id)) { tm.setA1(null); changed = true; }
-            if (tm.getA2() != null && tm.getA2().getId().equals(id)) { tm.setA2(null); changed = true; }
-            if (tm.getB1() != null && tm.getB1().getId().equals(id)) { tm.setB1(null); changed = true; }
-            if (tm.getB2() != null && tm.getB2().getId().equals(id)) { tm.setB2(null); changed = true; }
-            if (changed) tournamentMatchRepository.save(tm);
-        });
 
         tournamentTeamRepository.findAll().forEach(tt -> {
             boolean changed = false;

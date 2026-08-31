@@ -7,16 +7,7 @@
 </head>
 <body>
 
-<nav>
-    <a class="logo" href="/">🎴 Bela Tracker</a>
-    <div>
-        <a href="/">Početna</a>
-        <a href="/matches">Partije</a>
-        <a href="/players">Igrači</a>
-        <a href="/statistics">Statistika</a>
-        <a href="/tournaments">Turniri</a>
-    </div>
-</nav>
+<nav th:replace="~{fragments/nav :: nav}"></nav>
 
 <div class="container">
     <h2 th:text="${player.id != null} ? 'Uredi igrača' : 'Novi igrač'">Igrač</h2>

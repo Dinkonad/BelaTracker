@@ -59,23 +59,14 @@
 </head>
 <body>
 
-<nav>
-    <a class="logo" href="/">🎴 Bela Tracker</a>
-    <div>
-        <a href="/">Početna</a>
-        <a href="/matches">Partije</a>
-        <a href="/players">Igrači</a>
-        <a href="/statistics">Statistika</a>
-        <a href="/tournaments">Turniri</a>
-    </div>
-</nav>
+<nav th:replace="~{fragments/nav :: nav}"></nav>
 
 <div class="container">
     <h2 style="text-align:center;"
         th:text="${round.id != null} ? 'Uredi dijeljenje' : 'Novo dijeljenje'">Dijeljenje</h2>
 
     <div class="form-card">
-        <form id="roundForm" th:action="@{'/matches/' + ${matchId} + '/rounds/save'}"
+        <form id="roundForm" th:action="@{'/matches/' + ${matchId} + '/rounds/save'(back=${back})}"
               method="post" th:object="${round}">
             <input type="hidden" th:field="*{id}"/>
             <input type="hidden" th:field="*{team1Score}"/>
@@ -149,9 +140,9 @@
 
             <div class="row-actions">
                 <button type="submit" class="btn">Spremi</button>
-                <a th:href="@{'/matches/' + ${matchId}}" class="btn btn-outline">Odustani</a>
+                <a th:href="@{'/matches/' + ${matchId}(back=${back})}" class="btn btn-outline">Odustani</a>
                 <a th:if="${round.id != null}" class="btn btn-danger"
-                   th:href="@{'/matches/' + ${matchId} + '/rounds/delete/' + ${round.id}}"
+                   th:href="@{'/matches/' + ${matchId} + '/rounds/delete/' + ${round.id}(back=${back})}"
                    onclick="return confirm('Obrisati ovo dijeljenje?');">Obriši</a>
             </div>
         </form>

@@ -37,22 +37,13 @@
 </head>
 <body>
 
-<nav>
-    <a class="logo" href="/">🎴 Bela Tracker</a>
-    <div>
-        <a href="/">Početna</a>
-        <a href="/matches">Partije</a>
-        <a href="/players">Igrači</a>
-        <a href="/statistics">Statistika</a>
-        <a href="/tournaments">Turniri</a>
-    </div>
-</nav>
+<nav th:replace="~{fragments/nav :: nav}"></nav>
 
 <div class="board-page">
 
     <div class="bp-head">
         <h2>Blok</h2>
-        <a th:href="@{'/matches/delete/' + ${match.id}}"
+        <a th:unless="${inTournament}" th:href="@{'/matches/delete/' + ${match.id}}"
            onclick="return confirm('Obrisati partiju?');">Obriši partiju</a>
     </div>
     <div class="bp-sub" th:text="'Igra se do ' + ${match.targetScore}">Igra se do 1001</div>
@@ -62,7 +53,7 @@
         <div class="bhead"><span class="mi">MI</span><span class="vi">VI</span></div>
         <div class="brows">
             <a class="brow" th:each="r : ${match.rounds}"
-               th:href="@{'/matches/' + ${match.id} + '/rounds/edit/' + ${r.id}}">
+               th:href="@{'/matches/' + ${match.id} + '/rounds/edit/' + ${r.id}(back=${back})}">
                 <span th:text="${r.team1Score}">0</span>
                 <span th:text="${r.team2Score}">0</span>
             </a>
@@ -77,12 +68,13 @@
     </div>
 
     <a th:unless="${match.finished}" class="addbtn"
-       th:href="@{'/matches/' + ${match.id} + '/rounds/new'}">+ Dijeljenje</a>
+       th:href="@{'/matches/' + ${match.id} + '/rounds/new'(back=${back})}">+ Dijeljenje</a>
 
     <div th:if="${match.finished}" class="winner"
          th:text="'🏆 Pobjeda: ' + (${match.winner == 1} ? 'MI' : 'VI')">Pobjednik</div>
 
-    <a class="back" href="/matches">← Sve partije</a>
+    <a class="back" th:href="${back}"
+       th:text="${back == '/matches'} ? '← Sve partije' : '← Natrag na turnir'">← Sve partije</a>
 
 </div>
 

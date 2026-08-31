@@ -2,6 +2,7 @@ package belatracker.controller;
 
 import belatracker.model.Round;
 import belatracker.service.MatchService;
+import belatracker.service.TournamentService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -11,9 +12,11 @@ import org.springframework.web.bind.annotation.*;
 public class RoundController {
 
     private final MatchService matchService;
+    private final TournamentService tournamentService;
 
-    public RoundController(MatchService matchService) {
+    public RoundController(MatchService matchService, TournamentService tournamentService) {
         this.matchService = matchService;
+        this.tournamentService = tournamentService;
     }
 
     @GetMapping("/new")
@@ -44,6 +47,7 @@ public class RoundController {
         } else {
             matchService.addRound(matchId, round);
         }
+        tournamentService.syncFromMatch(matchId);
         String redirect = "/matches/" + matchId;
         if (back != null && !back.isEmpty()) redirect += "?back=" + back;
         return "redirect:" + redirect;
@@ -53,6 +57,7 @@ public class RoundController {
     public String delete(@PathVariable Long matchId, @PathVariable Long roundId,
                          @RequestParam(required = false) String back) {
         matchService.deleteRound(matchId, roundId);
+        tournamentService.syncFromMatch(matchId);
         String redirect = "/matches/" + matchId;
         if (back != null && !back.isEmpty()) redirect += "?back=" + back;
         return "redirect:" + redirect;

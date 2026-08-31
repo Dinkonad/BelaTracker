@@ -44,7 +44,10 @@ public class HomeController {
             model.addAttribute("showAddForm", true);
             return "statistics";
         }
-        playerService.savePlayer(player);
+        Player toSave = new Player();
+        toSave.setName(player.getName());
+        toSave.setNickname(player.getNickname());
+        playerService.savePlayer(toSave);
         return "redirect:/statistics?tab=igraci";
     }
 }

@@ -1,5 +1,6 @@
 package belatracker.controller;
 
+import belatracker.model.Match;
 import belatracker.model.TournamentFormat;
 import belatracker.service.PlayerService;
 import belatracker.service.TournamentService;
@@ -68,25 +69,17 @@ public class TournamentController {
         }
     }
 
-    // ---- ručni unos rezultata ----
-    @GetMapping("/{id}/quick/{tmId}")
+    // ---- igranje turnirskog meča kao obična partija (blok po blok) ----
+    @GetMapping("/{id}/play/{tmId}")
     @Transactional
-    public String quickForm(@PathVariable Long id, @PathVariable Long tmId, Model model) {
-        model.addAttribute("tm", service.getTournamentMatch(tmId));
-        model.addAttribute("tournamentId", id);
-        return "tournaments/quick-result";
-    }
-
-    @PostMapping("/{id}/quick/{tmId}")
-    public String quickSave(@PathVariable Long id, @PathVariable Long tmId,
-                            @RequestParam int scoreA, @RequestParam int scoreB,
-                            RedirectAttributes ra) {
+    public String play(@PathVariable Long id, @PathVariable Long tmId, RedirectAttributes ra) {
         try {
-            service.quickResult(tmId, scoreA, scoreB);
+            Match match = service.startOrContinue(tmId);
+            return "redirect:/matches/" + match.getId() + "?back=/tournaments/" + id;
         } catch (Exception e) {
             ra.addFlashAttribute("error", e.getMessage());
+            return "redirect:/tournaments/" + id;
         }
-        return "redirect:/tournaments/" + id;
     }
 
     @GetMapping("/delete/{id}")

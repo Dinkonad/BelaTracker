@@ -12,9 +12,10 @@
     <span class="tb" th:classappend="${tm.winnerSide == 2} ? ' win' : ''" th:text="${tm.labelB}">Tim B</span>
     <span class="act">
       <a th:if="${tm.winnerSide == 0 and !tm.bye and tm.ready}" class="btn btn-sm"
-         th:href="@{'/tournaments/' + ${tid} + '/quick/' + ${tm.id}}">Upiši rezultat</a>
-      <a th:if="${tm.winnerSide != 0 and !tm.bye}" class="btn btn-sm btn-outline"
-         th:href="@{'/tournaments/' + ${tid} + '/quick/' + ${tm.id}}">Uredi</a>
+         th:href="@{'/tournaments/' + ${tid} + '/play/' + ${tm.id}}"
+         th:text="${tm.match == null} ? 'Igraj' : 'Nastavi'">Igraj</a>
+      <a th:if="${tm.winnerSide != 0 and !tm.bye and tm.match != null}" class="btn btn-sm btn-outline"
+         th:href="@{'/matches/' + ${tm.match.id}(back='/tournaments/' + ${tid})}">Pogledaj blok</a>
       <span th:if="${tm.bye}" class="muted">slob. prolaz</span>
       <span th:if="${tm.winnerSide == 0 and !tm.bye and !tm.ready}" class="muted">čeka</span>
     </span>

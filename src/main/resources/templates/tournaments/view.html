@@ -29,16 +29,7 @@
     </style>
 </head>
 <body>
-<nav>
-    <a class="logo" href="/">🎴 Bela Tracker</a>
-    <div>
-        <a href="/">Početna</a>
-        <a href="/matches">Partije</a>
-        <a href="/players">Igrači</a>
-        <a href="/statistics">Statistika</a>
-        <a href="/tournaments">Turniri</a>
-    </div>
-</nav>
+<nav th:replace="~{fragments/nav :: nav}"></nav>
 
 <div class="container">
     <div class="err" th:if="${error}" th:text="${error}"></div>
@@ -57,7 +48,8 @@
     </div>
 
     <div class="hintbox">
-        Klikni <b>„Upiši rezultat”</b> pored para da uneseš bodove (npr. <b>1034 : 894</b>).
+        Klikni <b>„Igraj”</b> pored para da otvoriš blok i upisuješ dijeljenje po dijeljenje — rezultat se
+        u turnir upisuje sam čim partija dosegne cilj. Klikni <b>„Nastavi”</b> da se vratiš na već započetu partiju.
         Kad se odigraju sve utakmice po grupama, ždrijeb se generira automatski (1. i 2. iz svake grupe).
     </div>
     <div class="sect" th:each="g : ${groups}">

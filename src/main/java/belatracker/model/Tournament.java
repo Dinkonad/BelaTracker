@@ -19,7 +19,8 @@ public class Tournament {
     private int targetScore = 701;
     private LocalDate date;
 
-    private String status = "IN_PROGRESS";
+    @Enumerated(EnumType.STRING)
+    private TournamentStatus status = TournamentStatus.IN_PROGRESS;
     private String champion;
 
     public Long getId() { return id; }
@@ -32,10 +33,10 @@ public class Tournament {
     public void setTargetScore(int targetScore) { this.targetScore = targetScore; }
     public LocalDate getDate() { return date; }
     public void setDate(LocalDate date) { this.date = date; }
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public TournamentStatus getStatus() { return status; }
+    public void setStatus(TournamentStatus status) { this.status = status; }
     public String getChampion() { return champion; }
     public void setChampion(String champion) { this.champion = champion; }
 
-    public boolean isFinished() { return "FINISHED".equals(status); }
+    public boolean isFinished() { return status == TournamentStatus.FINISHED; }
 }

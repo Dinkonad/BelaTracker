@@ -16,15 +16,18 @@ public class TournamentService {
     private final TournamentTeamRepository teamRepo;
     private final TournamentMatchRepository tmRepo;
     private final PlayerRepository playerRepo;
+    private final MatchService matchService;
 
     public TournamentService(TournamentRepository tournamentRepo,
                              TournamentTeamRepository teamRepo,
                              TournamentMatchRepository tmRepo,
-                             PlayerRepository playerRepo) {
+                             PlayerRepository playerRepo,
+                             MatchService matchService) {
         this.tournamentRepo = tournamentRepo;
         this.teamRepo = teamRepo;
         this.tmRepo = tmRepo;
         this.playerRepo = playerRepo;
+        this.matchService = matchService;
     }
 
     public record RoundView(int roundNo, String title, List<TournamentMatch> matches) {
@@ -69,7 +72,7 @@ public class TournamentService {
         t.setFormat(format);
         t.setTargetScore(target);
         t.setDate(LocalDate.now());
-        t.setStatus("IN_PROGRESS");
+        t.setStatus(TournamentStatus.IN_PROGRESS);
         t = tournamentRepo.save(t);
 
         List<TournamentTeam> teams = pairTeams(t, players);
@@ -139,18 +142,44 @@ public class TournamentService {
     }
 
     @Transactional
-    public void quickResult(Long tmId, int scoreA, int scoreB) {
-        TournamentMatch tm = tmRepo.findById(tmId)
-                .orElseThrow(() -> new RuntimeException("Meč nije pronađen."));
-        if (!tm.isReady()) throw new IllegalStateException("Meč još nije spreman za unos.");
-        if (scoreA == scoreB) throw new IllegalArgumentException("Rezultati ne smiju biti izjednačeni.");
-        if (scoreA < 0 || scoreB < 0) throw new IllegalArgumentException("Bodovi ne mogu biti negativni.");
+    public Match startOrContinue(Long tmId) {
+        TournamentMatch tm = getTournamentMatch(tmId);
+        if (tm.getMatch() != null) return tm.getMatch();
+        if (tm.isBye() || !tm.isReady() || tm.getTeamA() == null || tm.getTeamB() == null)
+            throw new IllegalStateException("Meč još nije spreman za igru.");
 
-        tm.setScoreA(scoreA);
-        tm.setScoreB(scoreB);
-        tm.setWinnerSide(scoreA > scoreB ? 1 : 2);
+        Match match = new Match();
+        match.setTeam1Player1(tm.getTeamA().getPlayer1());
+        match.setTeam1Player2(tm.getTeamA().getPlayer2());
+        match.setTeam2Player1(tm.getTeamB().getPlayer1());
+        match.setTeam2Player2(tm.getTeamB().getPlayer2());
+        match.setTargetScore(tm.getTournament().getTargetScore());
+        match = matchService.saveMatch(match);
+
+        tm.setMatch(match);
         tmRepo.save(tm);
+        return match;
     }
+
+    @Transactional
+    public void syncFromMatch(Long matchId) {
+        tmRepo.findByMatchId(matchId).ifPresent(tm -> {
+            Match m = tm.getMatch();
+            if (m.isFinished() && tm.getWinnerSide() == 0) {
+                tm.setScoreA(m.getTeam1Total());
+                tm.setScoreB(m.getTeam2Total());
+                tm.setWinnerSide(m.getWinner());
+                tmRepo.save(tm);
+                sync(tm.getTournament().getId());
+            } else if (!m.isFinished() && tm.getWinnerSide() != 0) {
+                tm.setScoreA(null);
+                tm.setScoreB(null);
+                tm.setWinnerSide(0);
+                tmRepo.save(tm);
+            }
+        });
+    }
+
     @Transactional
     public void sync(Long tid) {
         Tournament t = get(tid);
@@ -224,7 +253,7 @@ public class TournamentService {
     }
 
     private void finish(Tournament t, String champion, List<Player> champions) {
-        t.setStatus("FINISHED");
+        t.setStatus(TournamentStatus.FINISHED);
         t.setChampion(champion);
         tournamentRepo.save(t);
         for (Player p : champions) {

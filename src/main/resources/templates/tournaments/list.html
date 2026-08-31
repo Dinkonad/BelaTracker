@@ -6,16 +6,7 @@
     <link rel="stylesheet" th:href="@{/style.css}"/>
 </head>
 <body>
-<nav>
-    <a class="logo" href="/">🎴 Bela Tracker</a>
-    <div>
-        <a href="/">Početna</a>
-        <a href="/matches">Partije</a>
-        <a href="/players">Igrači</a>
-        <a href="/statistics">Statistika</a>
-        <a href="/tournaments">Turniri</a>
-    </div>
-</nav>
+<nav th:replace="~{fragments/nav :: nav}"></nav>
 
 <div class="container">
     <div class="page-head">
@@ -30,10 +21,8 @@
         <tr th:each="t : ${tournaments}">
             <td th:text="${t.name}"></td>
             <td th:switch="${t.format.name()}">
-                <span th:case="'KNOCKOUT'">Ždrijeb</span>
-                <span th:case="'AMERICAN'">Američki</span>
-                <span th:case="'LEAGUE'">Liga</span>
                 <span th:case="'GROUPS_KNOCKOUT'">Grupe + ždrijeb</span>
+                <span th:case="*" th:text="${t.format}"></span>
             </td>
             <td>
                 <span th:if="${t.finished}" class="badge badge-done">Završen</span>

@@ -54,22 +54,6 @@ public class MatchService {
     }
 
     @Transactional
-    public Match saveMatchNoStats(Match match) {
-        if (match.getDate() == null) match.setDate(LocalDate.now());
-        return matchRepository.save(match);
-    }
-
-    @Transactional
-    public void saveRoundRaw(Round round) {
-        roundRepository.save(round);
-    }
-
-    @Transactional
-    public void deleteMatchNoStats(Long id) {
-        matchRepository.findById(id).ifPresent(matchRepository::delete);
-    }
-
-    @Transactional
     public void deleteMatch(Long id) {
         Match match = getMatchById(id);
         if (match.isFinished() && match.getWinner() != 0) {
